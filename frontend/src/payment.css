@@ -1,0 +1,141 @@
+/* payment.css */
+
+/* Root container */
+.payment-method-wrapper .container.small-container {
+  max-width: 1000px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Page Heading */
+.payment-method-wrapper .container.small-container h1 {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 2rem;
+  color: #333;
+}
+
+/* Layout split */
+.payment-method-wrapper .main-content {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.payment-method-wrapper .left-column,
+.payment-method-wrapper .right-column {
+  flex: 1;
+  min-width: 300px;
+}
+
+/* Card styling */
+.payment-method-wrapper .card-container {
+  background: #f9f9f9;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.payment-method-wrapper .card-container h4 {
+  margin-bottom: 1rem;
+  color: #444;
+}
+
+/* Cart Items */
+.payment-method-wrapper .cart-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 0.95rem;
+}
+
+.payment-method-wrapper .item-name {
+  font-weight: 500;
+}
+
+.payment-method-wrapper .item-price {
+  color: #555;
+}
+
+/* Summary List */
+.payment-method-wrapper .summary-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.payment-method-wrapper .summary-list li {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+/* Payment Options */
+.payment-method-wrapper .payment-option {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  cursor: pointer;
+  background: #fff;
+  transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+.payment-method-wrapper .payment-option:hover {
+  border-color: #007bff;
+  background: #f1f9ff;
+}
+
+.payment-method-wrapper .payment-option.selected {
+  border: 2px solid #28a745;
+  background-color: #eaffea;
+}
+
+.payment-method-wrapper .payment-option input[type='radio'] {
+  margin-right: 1rem;
+  accent-color: #28a745;
+}
+
+.payment-method-wrapper .payment-icon {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  margin-right: 1rem;
+}
+
+/* Card Form Fields */
+.payment-method-wrapper .card-details .form-control {
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  border: 1px solid #ccc;
+  font-size: 0.95rem;
+}
+
+.payment-method-wrapper .card-details .form-label {
+  font-weight: 500;
+  margin-bottom: 0.3rem;
+  color: #333;
+}
+
+/* Button */
+.payment-method-wrapper .btn-success {
+  padding: 0.75rem;
+  font-size: 1rem;
+  border-radius: 10px;
+  background-color: #28a745;
+  border: none;
+  font-weight: 600;
+}
+
+.payment-method-wrapper .btn-success:hover {
+  background-color: #218838;
+}

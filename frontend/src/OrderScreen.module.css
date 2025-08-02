@@ -1,0 +1,136 @@
+/* Container and General Styling */
+.container {
+  padding: 20px;
+}
+
+h1.my-3 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+/* Card Styling */
+.card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.card-body {
+  padding: 1rem 1.2rem;
+}
+
+/* Item Card Specific Styling */
+.card-items {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* Item Row Styling */
+.item-row {
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+}
+
+/* Image Styling */
+.item-row img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* Item Details Styling */
+.item-details {
+  margin-left: 15px;
+  font-size: 0.9rem;
+}
+
+.item-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.item-qty,
+.item-price {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+/* Message Styling */
+.message-box {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.message-box.success {
+  background-color: #e6f4ea;
+  color: #2e7d32;
+}
+
+.message-box.danger {
+  background-color: #ffe6e6;
+  color: #b71c1c;
+}
+.payment-options {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.payment-option {
+  display: flex;
+  align-items: center;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  cursor: default;
+  background-color: #f9f9f9;
+  transition: 0.3s ease-in-out;
+}
+
+.payment-option.selected {
+  border-color: #007bff;
+  background-color: #e6f0ff;
+}
+
+.payment-icon {
+  height: 30px;
+  margin-right: 0.5rem;
+}
+
+.pay-button-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.custom-pay-button {
+  background: linear-gradient(135deg, #5b73e8, #3f51b5);
+  color: #fff;
+  font-weight: 600;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(63, 81, 181, 0.2);
+  transition: all 0.3s ease;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  min-width: 200px;
+}
+
+.custom-pay-button:hover {
+  background: linear-gradient(135deg, #3f51b5, #5b73e8);
+  box-shadow: 0 6px 16px rgba(63, 81, 181, 0.3);
+  transform: translateY(-2px);
+}
+
+.custom-pay-button:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 6px rgba(63, 81, 181, 0.3);
+}
