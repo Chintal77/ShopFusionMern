@@ -15,6 +15,7 @@ function Header() {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const isLoginPage = location.pathname === '/login'; // Detect login page
 
   const updateCartCount = () => {
     const storedUser = localStorage.getItem('userInfo');
@@ -58,52 +59,57 @@ function Header() {
     localStorage.removeItem('userInfo');
     setUserInfo(null);
     navigate('/');
+    window.location.reload();
   };
 
   return (
     <>
-      {/* Sidebar */}
-      <div
-        className={`position-fixed top-0 start-0 bg-light shadow-lg h-100 p-3 transition ${
-          sidebarIsOpen ? 'd-block' : 'd-none'
-        }`}
-        style={{ width: '250px', zIndex: 1040 }}
-      >
-        <h5 className="mb-3">Categories</h5>
-        <button
-          className="btn btn-sm btn-outline-secondary mb-3"
-          onClick={() => setSidebarIsOpen(false)}
+      {/* Sidebar (Hidden on Login Page) */}
+      {!isLoginPage && (
+        <div
+          className={`position-fixed top-0 start-0 bg-light shadow-lg h-100 p-3 transition ${
+            sidebarIsOpen ? 'd-block' : 'd-none'
+          }`}
+          style={{ width: '250px', zIndex: 1040 }}
         >
-          Close ✖
-        </button>
-        <ul className="list-group">
-          {categories.map((category) => (
-            <li
-              key={category}
-              className="list-group-item list-group-item-action"
-              onClick={() => {
-                navigate(`/search?category=${encodeURIComponent(category)}`);
-                setSidebarIsOpen(false);
-              }}
-              style={{ cursor: 'pointer' }}
-            >
-              {category}
-            </li>
-          ))}
-        </ul>
-      </div>
+          <h5 className="mb-3">Categories</h5>
+          <button
+            className="btn btn-sm btn-outline-secondary mb-3"
+            onClick={() => setSidebarIsOpen(false)}
+          >
+            Close ✖
+          </button>
+          <ul className="list-group">
+            {categories.map((category) => (
+              <li
+                key={category}
+                className="list-group-item list-group-item-action"
+                onClick={() => {
+                  navigate(`/search?category=${encodeURIComponent(category)}`);
+                  setSidebarIsOpen(false);
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                {category}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Header */}
       <header className="bg-dark py-3 px-4 text-white">
         <div className="container-fluid d-flex justify-content-between align-items-center">
           {/* Left: Sidebar Toggle + Logo */}
           <div className="d-flex align-items-center gap-3">
-            <button
-              className="btn btn-outline-light"
-              onClick={() => setSidebarIsOpen(true)}
-            >
-              ☰
-            </button>
+            {!isLoginPage && (
+              <button
+                className="btn btn-outline-light"
+                onClick={() => setSidebarIsOpen(true)}
+              >
+                ☰
+              </button>
+            )}
             <Link
               to="/"
               className="text-white fs-4 fw-bold text-decoration-none"
@@ -112,10 +118,8 @@ function Header() {
             </Link>
           </div>
 
-          {/* Middle: SearchBox */}
-          <div className="mx-auto">
-            <SearchBox />
-          </div>
+          {/* Middle: SearchBox (Hidden on Login Page) */}
+          <div className="mx-auto">{!isLoginPage && <SearchBox />}</div>
 
           {/* Right: Cart + User */}
           <div className="d-flex align-items-center gap-4">
@@ -173,6 +177,14 @@ function Header() {
                           onClick={() => navigate('/admin/products')}
                         >
                           📦 Manage Products
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          className="dropdown-item"
+                          onClick={() => navigate('/admin/orders')}
+                        >
+                          📜 Manage Orders
                         </button>
                       </li>
                       <li>

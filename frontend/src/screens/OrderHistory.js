@@ -38,6 +38,10 @@ export default function OrderHistoryScreen() {
   const itemsPerPage = 5;
 
   useEffect(() => {
+    if (!userInfo) {
+      navigate('/login'); // Redirect to login if not logged in
+      return;
+    }
     const fetchData = async () => {
       dispatch({ type: 'FETCH_REQUEST' });
       try {

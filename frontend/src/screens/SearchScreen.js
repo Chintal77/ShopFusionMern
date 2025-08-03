@@ -105,20 +105,27 @@ export default function SearchScreen() {
       }
     };
     fetchData();
-  }, [category, error, order, page, price, query, rating]);
+  }, [category, error, order, page, price, query, rating, navigate]);
 
   const getFilterUrl = (filter, skipPathname) => {
     const filterPage = filter.page || page;
     const filterCategory = filter.category || category;
     const filterQuery = filter.query || query;
-    const filterRating = filter.rating || rating;
+
     const filterPrice = filter.price || price;
     const sortOrder = filter.order || order;
 
     return `${
       skipPathname ? '' : '/search?'
-    }category=${filterCategory}&query=${filterQuery}&price=${filterPrice}&rating=${filterRating}&order=${sortOrder}&page=${filterPage}`;
+    }category=${filterCategory}&query=${filterQuery}&price=${filterPrice}&order=${sortOrder}&page=${filterPage}`;
   };
+
+  useEffect(() => {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    if (!userInfo) {
+      navigate('/login'); // Redirect if not logged in
+    }
+  }, [navigate]);
 
   return (
     <div className="container">
@@ -215,14 +222,33 @@ export default function SearchScreen() {
 
               <Row>
                 {products.map((product) => (
-                  <Col sm={6} lg={4} className="mb-4" key={product._id}>
-                    <Card className="h-100 shadow-sm">
+                  <Col
+                    sm={12}
+                    md={6}
+                    lg={4}
+                    xl={3}
+                    className="mb-4"
+                    key={product._id}
+                  >
+                    <Card
+                      className="h-100 shadow-lg"
+                      style={{
+                        transform: 'scale(1.02)',
+                        transition: 'transform 0.3s ease-in-out',
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.transform = 'scale(1.05)')
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.transform = 'scale(1.02)')
+                      }
+                    >
                       <Link to={`/product/${product._id}`}>
                         <Card.Img
                           variant="top"
                           src={product.image}
                           alt={product.name}
-                          style={{ objectFit: 'cover', height: '200px' }}
+                          style={{ objectFit: 'cover', height: '250px' }}
                         />
                       </Link>
                       <Card.Body>
@@ -230,14 +256,17 @@ export default function SearchScreen() {
                           to={`/product/${product._id}`}
                           className="text-decoration-none"
                         >
-                          <Card.Title as="h6" className="text-dark">
+                          <Card.Title as="h5" className="text-dark">
                             {product.name}
                           </Card.Title>
                         </Link>
-                        <Card.Text>
+                        <Card.Text style={{ fontSize: '1.1rem' }}>
                           ⭐ {product.rating} ({product.numReviews} reviews)
                         </Card.Text>
-                        <Card.Text className="fw-bold">
+                        <Card.Text
+                          className="fw-bold"
+                          style={{ fontSize: '1.2rem' }}
+                        >
                           ₹{product.price}
                         </Card.Text>
                       </Card.Body>
@@ -246,23 +275,27 @@ export default function SearchScreen() {
                 ))}
               </Row>
 
-              <ButtonGroup className="mt-4">
-                {[...Array(pages).keys()].map((x) => (
-                  <LinkContainer
-                    key={x + 1}
-                    to={{
-                      pathname: '/search',
-                      search: getFilterUrl({ page: x + 1 }, true),
-                    }}
-                  >
-                    <Button
-                      variant={Number(page) === x + 1 ? 'dark' : 'outline-dark'}
+              <div className="d-flex justify-content-center mt-4">
+                <ButtonGroup>
+                  {[...Array(pages).keys()].map((x) => (
+                    <LinkContainer
+                      key={x + 1}
+                      to={{
+                        pathname: '/search',
+                        search: getFilterUrl({ page: x + 1 }, true),
+                      }}
                     >
-                      {x + 1}
-                    </Button>
-                  </LinkContainer>
-                ))}
-              </ButtonGroup>
+                      <Button
+                        variant={
+                          Number(page) === x + 1 ? 'dark' : 'outline-dark'
+                        }
+                      >
+                        {x + 1}
+                      </Button>
+                    </LinkContainer>
+                  ))}
+                </ButtonGroup>
+              </div>
             </>
           )}
         </Col>

@@ -18,6 +18,8 @@ import OrderScreen from './screens/MyOrdersScreen';
 import OrderHistoryScreen from './screens/OrderHistory';
 import ProfileScreen from './screens/ProfileScreen';
 import SearchScreen from './screens/SearchScreen';
+import AdminRoute from './components/AdminRoute';
+import DashboardScreen from './screens/DashBoardScreen';
 
 function App() {
   const [cartItems, setCartItems] = useState(() => {
@@ -92,6 +94,16 @@ function App() {
             <Route
               path="/orderhistory"
               element={<OrderHistoryScreen />}
+            ></Route>
+
+            {}
+            <Route
+              path="/admin/dashboard"
+              element={
+                <AdminRoute>
+                  <DashboardScreen />
+                </AdminRoute>
+              }
             ></Route>
           </Routes>
         </main>

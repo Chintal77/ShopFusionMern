@@ -10,11 +10,10 @@ function LoginScreen() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ Get redirect query param from URL
   const redirectInUrl = new URLSearchParams(location.search).get('redirect');
   const redirect = redirectInUrl ? redirectInUrl : '/';
 
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState(''); // can be name or email
   const [password, setPassword] = useState('');
 
   const { state, dispatch: ctxDispatch } = useContext(Store);
@@ -24,14 +23,19 @@ function LoginScreen() {
     e.preventDefault();
     try {
       const { data } = await Axios.post('/api/users/signin', {
-        email,
+        identifier, // send generic identifier
         password,
       });
+
       ctxDispatch({ type: 'USER_SIGNIN', payload: data });
       localStorage.setItem('userInfo', JSON.stringify(data));
 
-      // ✅ Go to redirect route or fallback to /
-      navigate(redirect);
+      // Redirect based on user type
+      if (data.isAdmin) {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       toast.error(getError(err));
     }
@@ -50,10 +54,10 @@ function LoginScreen() {
         <p className="form-subtitle">Login to your ShopFusion account</p>
         <form className="auth-form" onSubmit={submitHandler}>
           <input
-            type="email"
-            placeholder="📧 Email"
+            type="text"
+            placeholder="📧 Email or Username"
             required
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => setIdentifier(e.target.value)}
           />
           <input
             type="password"
