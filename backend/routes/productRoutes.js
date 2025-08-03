@@ -1,6 +1,7 @@
 import express from 'express';
 import Product from '../models/productModel.js';
 import expressAsyncHandler from 'express-async-handler';
+import { isAdmin, isAuth } from '../utils.js';
 
 const productRouter = express.Router();
 
@@ -9,12 +10,76 @@ productRouter.get('/', async (req, res) => {
   res.send(products);
 });
 
-const PAGE_SIZE = 4;
+const PAGE_SIZE = 10;
+
+productRouter.get(
+  '/admin',
+  isAuth,
+  isAdmin,
+  expressAsyncHandler(async (req, res) => {
+    const { query } = req;
+    const page = query.page || 1;
+    const pageSize = query.pageSize || PAGE_SIZE;
+
+    const products = await Product.find()
+      .skip(pageSize * (page - 1))
+      .limit(pageSize);
+    const countProducts = await Product.countDocuments();
+    res.send({
+      products,
+      countProducts,
+      page,
+      pages: Math.ceil(countProducts / pageSize),
+    });
+  })
+);
+
+productRouter.post(
+  '/',
+  isAuth,
+  isAdmin,
+  expressAsyncHandler(async (req, res) => {
+    const newProduct = new Product({
+      name: 'Sample Product ' + Date.now(),
+      slug: 'sample-product-' + Date.now(),
+      image: '/images/p4.jpg',
+      price: 999,
+      category: 'Sample Category',
+      brand: 'Sample Brand',
+      countInStock: 100,
+      rating: 4.5,
+      numReviews: 10,
+      description: 'This is a sample product used for testing and development.',
+
+      // Additional fields from extended schema
+      badge: 'Best Seller',
+      seller: 'ShopFusion',
+      delivery: 'Free delivery within 3–5 days',
+      returnPolicy: '7-day return applicable',
+      highlights: ['High quality', 'Comfortable', 'Stylish'],
+      sizeFit: 'Regular Fit',
+      specifications: {
+        fabric: 'Cotton',
+        pattern: 'Plain',
+        sleeve: 'Short',
+        collar: 'Round Neck',
+        fit: 'Regular',
+        occasion: 'Casual',
+        washCare: 'Hand Wash',
+      },
+    });
+
+    const product = await newProduct.save();
+    res.status(201).send({ message: 'Product Created', product });
+  })
+);
+
+const PAGE_SIZEE = 4;
 productRouter.get(
   '/search',
   expressAsyncHandler(async (req, res) => {
     const { query } = req;
-    const pageSize = query.pageSize || PAGE_SIZE;
+    const pageSize = query.pageSize || PAGE_SIZEE;
     const page = query.page || 1;
     const category = query.category || '';
     const price = query.price || '';

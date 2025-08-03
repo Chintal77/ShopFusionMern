@@ -20,6 +20,8 @@ import ProfileScreen from './screens/ProfileScreen';
 import SearchScreen from './screens/SearchScreen';
 import AdminRoute from './components/AdminRoute';
 import DashboardScreen from './screens/DashBoardScreen';
+import ProductListScreen from './screens/ProductListScreen';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 
 function App() {
   const [cartItems, setCartItems] = useState(() => {
@@ -102,6 +104,15 @@ function App() {
               element={
                 <AdminRoute>
                   <DashboardScreen />
+                </AdminRoute>
+              }
+            ></Route>
+
+            <Route
+              path="/admin/products"
+              element={
+                <AdminRoute>
+                  <ProductListScreen />
                 </AdminRoute>
               }
             ></Route>

@@ -129,7 +129,7 @@ function Header() {
 
           {/* Right: Cart + User */}
           <div className="d-flex align-items-center gap-4">
-            {!userInfo?.isAdmin && (
+            {userInfo && !userInfo?.isAdmin && (
               <Link
                 to="/cart"
                 className="text-white text-decoration-none position-relative"
