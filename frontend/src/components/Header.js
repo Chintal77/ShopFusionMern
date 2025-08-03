@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import { getError } from '../utils';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
-import data from '../data'; // Ensure correct relative path
+import SearchBox from './SearchBox';
 
 function Header() {
   const [userInfo, setUserInfo] = useState(null);
   const [cartCount, setCartCount] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showSidebar, setShowSidebar] = useState(false);
+  const [sidebarIsOpen, setSidebarIsOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -38,47 +42,48 @@ function Header() {
     return () => window.removeEventListener('storage', updateCartCount);
   }, [location]);
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const { data } = await axios.get(`/api/products/categories`);
+        setCategories(data);
+      } catch (err) {
+        toast.error(getError(err));
+      }
+    };
+    fetchCategories();
+  }, []);
+
   const logoutHandler = () => {
     localStorage.removeItem('userInfo');
     setUserInfo(null);
     navigate('/');
   };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchTerm.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
-    }
-  };
-
-  const uniqueCategories = [
-    ...new Set(data.products.map((product) => product.category)),
-  ];
-
   return (
     <>
       {/* Sidebar */}
       <div
         className={`position-fixed top-0 start-0 bg-light shadow-lg h-100 p-3 transition ${
-          showSidebar ? 'd-block' : 'd-none'
+          sidebarIsOpen ? 'd-block' : 'd-none'
         }`}
         style={{ width: '250px', zIndex: 1040 }}
       >
         <h5 className="mb-3">Categories</h5>
         <button
           className="btn btn-sm btn-outline-secondary mb-3"
-          onClick={() => setShowSidebar(false)}
+          onClick={() => setSidebarIsOpen(false)}
         >
           Close ✖
         </button>
         <ul className="list-group">
-          {uniqueCategories.map((category) => (
+          {categories.map((category) => (
             <li
               key={category}
               className="list-group-item list-group-item-action"
               onClick={() => {
-                navigate(`/category/${encodeURIComponent(category)}`);
-                setShowSidebar(false);
+                navigate(`/search?category=${encodeURIComponent(category)}`);
+                setSidebarIsOpen(false);
               }}
               style={{ cursor: 'pointer' }}
             >
@@ -89,151 +94,136 @@ function Header() {
       </div>
 
       {/* Header */}
-      <header className="header bg-dark py-3 px-4 text-white d-flex justify-content-between align-items-center">
-        {/* Sidebar toggle */}
-        <button
-          className="btn btn-outline-light me-3"
-          onClick={() => setShowSidebar(true)}
-        >
-          ☰
-        </button>
-
-        <Link
-          to="/"
-          className="text-white fs-4 fw-bold text-decoration-none me-4"
-        >
-          🛍️ ShopFusion
-        </Link>
-
-        {/* Search Bar */}
-        <form
-          onSubmit={handleSearch}
-          className="d-flex flex-grow-1 mx-4"
-          style={{ maxWidth: '500px' }}
-        >
-          <input
-            type="text"
-            placeholder="Search products..."
-            className="form-control me-2"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <button className="btn btn-outline-light" type="submit">
-            🔍
-          </button>
-        </form>
-
-        {/* Right Nav */}
-        <nav className="d-flex align-items-center gap-4">
-          <Link
-            to="/cart"
-            className="text-white text-decoration-none position-relative"
-          >
-            <span style={{ fontSize: '1rem' }}>🛒</span>
-            {cartCount > 0 && (
-              <span
-                className="badge bg-danger rounded-pill position-absolute"
-                style={{
-                  top: '4px',
-                  right: '-10px',
-                  fontSize: '0.7rem',
-                  padding: '2px 6px',
-                }}
-              >
-                {cartCount}
-              </span>
-            )}
-          </Link>
-
-          {userInfo ? (
-            <div className="dropdown">
-              <button
-                className="btn btn-sm btn-secondary dropdown-toggle"
-                type="button"
-                id="userDropdown"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                {userInfo.isAdmin ? '👑' : '👋'} <small>{userInfo.name}</small>
-              </button>
-              <ul
-                className="dropdown-menu dropdown-menu-end"
-                aria-labelledby="userDropdown"
-              >
-                {userInfo.isAdmin ? (
-                  <>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate('/admin/dashboard')}
-                      >
-                        🧾 Admin Dashboard
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate('/admin/products')}
-                      >
-                        📦 Manage Products
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate('/admin/reports')}
-                      >
-                        📊 Reports
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate('/profile')}
-                      >
-                        ⚙️ Profile Settings
-                      </button>
-                    </li>
-                  </>
-                ) : (
-                  <>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate('/orderhistory')}
-                      >
-                        📜 My Orders
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="dropdown-item"
-                        onClick={() => navigate('/profile')}
-                      >
-                        ⚙️ Profile Settings
-                      </button>
-                    </li>
-                  </>
-                )}
-                <li>
-                  <hr className="dropdown-divider" />
-                </li>
-                <li>
-                  <button
-                    className="dropdown-item text-danger"
-                    onClick={logoutHandler}
-                  >
-                    🚪 Logout
-                  </button>
-                </li>
-              </ul>
-            </div>
-          ) : (
-            <Link to="/login" className="btn btn-sm btn-outline-light">
-              Login
+      <header className="bg-dark py-3 px-4 text-white">
+        <div className="container-fluid d-flex justify-content-between align-items-center">
+          {/* Left: Sidebar Toggle + Logo */}
+          <div className="d-flex align-items-center gap-3">
+            <button
+              className="btn btn-outline-light"
+              onClick={() => setSidebarIsOpen(true)}
+            >
+              ☰
+            </button>
+            <Link
+              to="/"
+              className="text-white fs-4 fw-bold text-decoration-none"
+            >
+              🛍️ ShopFusion
             </Link>
-          )}
-        </nav>
+          </div>
+
+          {/* Middle: SearchBox */}
+          <div className="mx-auto">
+            <SearchBox />
+          </div>
+
+          {/* Right: Cart + User */}
+          <div className="d-flex align-items-center gap-4">
+            {/* Cart Icon */}
+            <Link
+              to="/cart"
+              className="text-white text-decoration-none position-relative"
+            >
+              🛒
+              {cartCount > 0 && (
+                <span
+                  className="badge bg-danger rounded-pill position-absolute"
+                  style={{
+                    top: '-8px',
+                    right: '-10px',
+                    fontSize: '0.7rem',
+                    padding: '2px 6px',
+                  }}
+                >
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+
+            {/* User Dropdown */}
+            {userInfo ? (
+              <div className="dropdown">
+                <button
+                  className="btn btn-sm btn-secondary dropdown-toggle"
+                  type="button"
+                  id="userDropdown"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  {userInfo.isAdmin ? '👑' : '👋'}{' '}
+                  <small>{userInfo.name}</small>
+                </button>
+                <ul
+                  className="dropdown-menu dropdown-menu-end"
+                  aria-labelledby="userDropdown"
+                >
+                  {userInfo.isAdmin ? (
+                    <>
+                      <li>
+                        <button
+                          className="dropdown-item"
+                          onClick={() => navigate('/admin/dashboard')}
+                        >
+                          🧾 Admin Dashboard
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          className="dropdown-item"
+                          onClick={() => navigate('/admin/products')}
+                        >
+                          📦 Manage Products
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          className="dropdown-item"
+                          onClick={() => navigate('/admin/reports')}
+                        >
+                          📊 Reports
+                        </button>
+                      </li>
+                    </>
+                  ) : (
+                    <>
+                      <li>
+                        <button
+                          className="dropdown-item"
+                          onClick={() => navigate('/orderhistory')}
+                        >
+                          📜 My Orders
+                        </button>
+                      </li>
+                    </>
+                  )}
+                  <li>
+                    <button
+                      className="dropdown-item"
+                      onClick={() => navigate('/profile')}
+                    >
+                      ⚙️ Profile Settings
+                    </button>
+                  </li>
+                  <li>
+                    <hr className="dropdown-divider" />
+                  </li>
+                  <li>
+                    <button
+                      className="dropdown-item text-danger"
+                      onClick={logoutHandler}
+                    >
+                      🚪 Logout
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            ) : (
+              <Link to="/login" className="btn btn-sm btn-outline-light">
+                Login
+              </Link>
+            )}
+          </div>
+        </div>
       </header>
     </>
   );

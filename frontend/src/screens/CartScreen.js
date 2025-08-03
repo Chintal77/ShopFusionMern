@@ -35,6 +35,21 @@ function CartScreen({ cartItems, setCartItems }) {
     }
   }, [userInfo, navigate]);
 
+  // ✅ New fix: load cart from localStorage if empty
+  useEffect(() => {
+    if ((!cartItems || cartItems.length === 0) && userInfo?.email) {
+      const storedCart = localStorage.getItem(`cartItems_${userInfo.email}`);
+      if (storedCart) {
+        try {
+          const parsedCart = JSON.parse(storedCart);
+          setCartItems(Array.isArray(parsedCart) ? parsedCart : []);
+        } catch {
+          setCartItems([]);
+        }
+      }
+    }
+  }, [cartItems, userInfo, setCartItems]);
+
   useEffect(() => {
     document.title = 'ShopFusion | Cart';
   }, []);

@@ -17,6 +17,7 @@ import PaymentMethodScreen from './screens/PaymentMethodScreen';
 import OrderScreen from './screens/MyOrdersScreen';
 import OrderHistoryScreen from './screens/OrderHistory';
 import ProfileScreen from './screens/ProfileScreen';
+import SearchScreen from './screens/SearchScreen';
 
 function App() {
   const [cartItems, setCartItems] = useState(() => {
@@ -86,6 +87,7 @@ function App() {
             <Route path="/order/:id" element={<OrderScreen />}></Route>
             <Route path="/order-success" element={<OrderSuccessScreen />} />
             <Route path="/profile" element={<ProfileScreen />} />
+            <Route path="/search" element={<SearchScreen />} />
 
             <Route
               path="/orderhistory"

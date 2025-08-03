@@ -31,7 +31,7 @@ const data = {
       price: 120,
       countInStock: 20,
       brand: 'Nike',
-      rating: 4.5,
+      rating: 8.5,
       numReviews: 20,
       description: 'High quality shirt',
       badge: '15% OFF',
