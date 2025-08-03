@@ -15,7 +15,7 @@ function Header() {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const isLoginPage = location.pathname === '/login'; // Detect login page
+  const isLoginPage = location.pathname === '/login';
 
   const updateCartCount = () => {
     const storedUser = localStorage.getItem('userInfo');
@@ -64,8 +64,8 @@ function Header() {
 
   return (
     <>
-      {/* Sidebar (Hidden on Login Page) */}
-      {!isLoginPage && (
+      {/* Sidebar (Only for non-admin and not on login page) */}
+      {!isLoginPage && !userInfo?.isAdmin && (
         <div
           className={`position-fixed top-0 start-0 bg-light shadow-lg h-100 p-3 transition ${
             sidebarIsOpen ? 'd-block' : 'd-none'
@@ -102,7 +102,7 @@ function Header() {
         <div className="container-fluid d-flex justify-content-between align-items-center">
           {/* Left: Sidebar Toggle + Logo */}
           <div className="d-flex align-items-center gap-3">
-            {!isLoginPage && (
+            {!isLoginPage && !userInfo?.isAdmin && (
               <button
                 className="btn btn-outline-light"
                 onClick={() => setSidebarIsOpen(true)}
@@ -110,41 +110,47 @@ function Header() {
                 ☰
               </button>
             )}
-            <Link
-              to="/"
-              className="text-white fs-4 fw-bold text-decoration-none"
-            >
-              🛍️ ShopFusion
-            </Link>
+            {userInfo?.isAdmin ? (
+              <span className="text-white fs-4 fw-bold">🛍️ ShopFusion</span>
+            ) : (
+              <Link
+                to="/"
+                className="text-white fs-4 fw-bold text-decoration-none"
+              >
+                🛍️ ShopFusion
+              </Link>
+            )}
           </div>
 
-          {/* Middle: SearchBox (Hidden on Login Page) */}
-          <div className="mx-auto">{!isLoginPage && <SearchBox />}</div>
+          {/* Middle: SearchBox */}
+          <div className="mx-auto">
+            {!isLoginPage && !userInfo?.isAdmin && <SearchBox />}
+          </div>
 
           {/* Right: Cart + User */}
           <div className="d-flex align-items-center gap-4">
-            {/* Cart Icon */}
-            <Link
-              to="/cart"
-              className="text-white text-decoration-none position-relative"
-            >
-              🛒
-              {cartCount > 0 && (
-                <span
-                  className="badge bg-danger rounded-pill position-absolute"
-                  style={{
-                    top: '-8px',
-                    right: '-10px',
-                    fontSize: '0.7rem',
-                    padding: '2px 6px',
-                  }}
-                >
-                  {cartCount}
-                </span>
-              )}
-            </Link>
+            {!userInfo?.isAdmin && (
+              <Link
+                to="/cart"
+                className="text-white text-decoration-none position-relative"
+              >
+                🛒
+                {cartCount > 0 && (
+                  <span
+                    className="badge bg-danger rounded-pill position-absolute"
+                    style={{
+                      top: '-8px',
+                      right: '-10px',
+                      fontSize: '0.7rem',
+                      padding: '2px 6px',
+                    }}
+                  >
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+            )}
 
-            {/* User Dropdown */}
             {userInfo ? (
               <div className="dropdown">
                 <button
