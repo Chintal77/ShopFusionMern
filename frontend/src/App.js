@@ -24,7 +24,7 @@ function App() {
     return saved ? JSON.parse(saved) : {};
   });
 
-  const [clientId, setClientId] = useState(null);
+  const [, setClientId] = useState(null);
 
   useEffect(() => {
     const fetchClientId = async () => {
@@ -42,10 +42,6 @@ function App() {
   useEffect(() => {
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
   }, [cartItems]);
-
-  if (!clientId) {
-    return <div>Loading PayPal...</div>;
-  }
 
   return (
     <BrowserRouter>

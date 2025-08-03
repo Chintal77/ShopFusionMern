@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useReducer, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import LoadingBox from '../components/LoadingBox';
+
 import MessageBox from '../components/MessageBox';
 import { Store } from '../Store';
 import { getError } from '../utils';
@@ -80,7 +80,18 @@ export default function OrderHistoryScreen() {
         </div>
 
         {loading ? (
-          <LoadingBox />
+          <div className="text-center py-5">
+            <div
+              className="spinner-border text-primary mb-3"
+              role="status"
+              style={{ width: '4rem', height: '4rem' }}
+            >
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="fw-semibold text-muted">
+              Fetching your orders... Hang tight! 📦
+            </p>
+          </div>
         ) : error ? (
           <MessageBox variant="danger">{error}</MessageBox>
         ) : (

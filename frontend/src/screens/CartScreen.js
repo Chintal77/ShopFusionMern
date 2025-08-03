@@ -2,6 +2,7 @@ import { useEffect, useReducer, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../CartScreen.css';
+import { toast } from 'react-toastify';
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -29,7 +30,7 @@ function CartScreen({ cartItems, setCartItems }) {
 
   useEffect(() => {
     if (!userInfo || !userInfo.token) {
-      alert('⚠️ Please login to view your cart');
+      toast.warning('⚠️ Please login to view your cart');
       navigate('/login?redirect=/cart');
     }
   }, [userInfo, navigate]);

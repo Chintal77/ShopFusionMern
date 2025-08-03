@@ -14,6 +14,12 @@ const data = {
       password: bcrypt.hashSync('123456'),
       isAdmin: false,
     },
+    {
+      name: 'Gaurav',
+      email: 'gaurav@shopfusion.com',
+      password: bcrypt.hashSync('123456'),
+      isAdmin: false,
+    },
   ],
   products: [
     {
@@ -82,7 +88,7 @@ const data = {
     {
       name: 'Puma Stretch Shirt',
       slug: 'Puma-stretch-shirt',
-      category: 'Shirts',
+      category: 'Pyjama',
       image: '/images/p1.jpg',
       price: 490,
       countInStock: 10,
