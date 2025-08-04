@@ -113,6 +113,38 @@ export default function OrderScreen() {
     }
   }, [order, userInfo, orderId, navigate, paypalDispatch, successPay]);
 
+  const renderOrderProgress = () => {
+    const steps = [
+      { label: 'Order Placed', completed: true },
+      { label: 'Packing', completed: order.isPacking },
+      { label: 'Dispatched', completed: order.isDispatched },
+      { label: 'Out for Delivery', completed: order.outForDelivery },
+      { label: 'Delivered', completed: order.isDelivered },
+    ];
+
+    return (
+      <div className="order-progress">
+        {steps.map((step, index) => {
+          const isCurrent = step.isCurrent;
+          const isCompleted = step.completed;
+          return (
+            <div
+              key={index}
+              className={`step ${isCompleted ? 'completed' : ''} ${
+                isCurrent ? 'current' : ''
+              }`}
+            >
+              <div className="circle">
+                {isCompleted ? '✓' : isCurrent ? '🕒' : index + 1}
+              </div>
+              <div className="label">{step.label}</div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   function createOrder(data, actions) {
     return actions.order
       .create({
@@ -179,6 +211,8 @@ export default function OrderScreen() {
         <title>Order {orderId}</title>
       </Helmet>
       <h1 className="my-3">Order {orderId}</h1>
+
+      {renderOrderProgress()}
       <Row>
         <Col md={8}>
           {/* Shipping Info */}

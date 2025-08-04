@@ -128,7 +128,10 @@ export default function OrderListScreen() {
                   <th>Total</th>
                   <th>Paid</th>
                   <th>Status</th>
-                  <th>Update</th>
+                  <th>Packing</th>
+                  <th>Dispatched</th>
+                  <th>Out for Delivery</th>
+                  <th>Delivered</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -193,80 +196,79 @@ export default function OrderListScreen() {
                       })()}
                     </td>
 
-                    <td>
-                      {order.isPaid && !order.isDelivered ? (
-                        <div className="d-flex flex-column gap-1">
-                          <div>
-                            Packing:{' '}
-                            <Button
-                              size="sm"
-                              variant={order.isPacking ? 'success' : 'danger'}
-                              onClick={() =>
-                                updateStatus(
-                                  order._id,
-                                  'isPacking',
-                                  !order.isPacking
-                                )
-                              }
-                            >
-                              {order.isPacking ? 'Yes' : 'No'}
-                            </Button>
-                          </div>
-                          <div>
-                            Dispatched:{' '}
-                            <Button
-                              size="sm"
-                              variant={
-                                order.isDispatched ? 'success' : 'danger'
-                              }
-                              onClick={() =>
-                                updateStatus(
-                                  order._id,
-                                  'isDispatched',
-                                  !order.isDispatched
-                                )
-                              }
-                            >
-                              {order.isDispatched ? 'Yes' : 'No'}
-                            </Button>
-                          </div>
-                          <div>
-                            Out for Delivery:{' '}
-                            <Button
-                              size="sm"
-                              variant={
-                                order.outForDelivery ? 'success' : 'danger'
-                              }
-                              onClick={() =>
-                                updateStatus(
-                                  order._id,
-                                  'outForDelivery',
-                                  !order.outForDelivery
-                                )
-                              }
-                            >
-                              {order.outForDelivery ? 'Yes' : 'No'}
-                            </Button>
-                          </div>
-                          <div>
-                            Delivered:{' '}
-                            <Button
-                              size="sm"
-                              variant={order.isDelivered ? 'success' : 'danger'}
-                              onClick={() =>
-                                updateStatus(
-                                  order._id,
-                                  'isDelivered',
-                                  !order.isDelivered
-                                )
-                              }
-                            >
-                              {order.isDelivered ? 'Yes' : 'No'}
-                            </Button>
-                          </div>
-                        </div>
-                      ) : null}
-                    </td>
+                    {order.isPaid && !order.isDelivered ? (
+                      <>
+                        <td>
+                          <Button
+                            size="sm"
+                            variant={order.isPacking ? 'success' : 'danger'}
+                            onClick={() =>
+                              updateStatus(
+                                order._id,
+                                'isPacking',
+                                !order.isPacking
+                              )
+                            }
+                          >
+                            {order.isPacking ? 'Yes' : 'No'}
+                          </Button>
+                        </td>
+                        <td>
+                          <Button
+                            size="sm"
+                            variant={order.isDispatched ? 'success' : 'danger'}
+                            onClick={() =>
+                              updateStatus(
+                                order._id,
+                                'isDispatched',
+                                !order.isDispatched
+                              )
+                            }
+                          >
+                            {order.isDispatched ? 'Yes' : 'No'}
+                          </Button>
+                        </td>
+                        <td>
+                          <Button
+                            size="sm"
+                            variant={
+                              order.outForDelivery ? 'success' : 'danger'
+                            }
+                            onClick={() =>
+                              updateStatus(
+                                order._id,
+                                'outForDelivery',
+                                !order.outForDelivery
+                              )
+                            }
+                          >
+                            {order.outForDelivery ? 'Yes' : 'No'}
+                          </Button>
+                        </td>
+                        <td>
+                          <Button
+                            size="sm"
+                            variant={order.isDelivered ? 'success' : 'danger'}
+                            onClick={() =>
+                              updateStatus(
+                                order._id,
+                                'isDelivered',
+                                !order.isDelivered
+                              )
+                            }
+                          >
+                            {order.isDelivered ? 'Yes' : 'No'}
+                          </Button>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                      </>
+                    )}
 
                     <td>
                       <Button

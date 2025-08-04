@@ -76,3 +76,40 @@ h1.my-3 {
   background-color: #ffe6e6;
   color: #b71c1c;
 }
+
+.order-progress {
+  display: flex;
+  justify-content: space-between;
+  margin: 20px 0;
+  gap: 16px;
+}
+
+.step {
+  text-align: center;
+  flex: 1;
+  position: relative;
+}
+
+.circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  line-height: 32px;
+  background-color: #ccc;
+  color: white;
+  font-weight: bold;
+  margin: 0 auto;
+}
+
+.step.completed .circle {
+  background-color: #4caf50; /* Green for completed */
+}
+
+.step.current .circle {
+  background-color: #2196f3; /* Blue for current */
+}
+
+.label {
+  margin-top: 6px;
+  font-size: 14px;
+}
