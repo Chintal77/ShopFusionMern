@@ -35,17 +35,40 @@ const reducer = (state, action) => {
       };
     case 'CREATE_FAIL':
       return { ...state, loadingCreate: false };
+    case 'DELETE_REQUEST':
+      return { ...state, loadingDelete: true, successDelete: false };
+    case 'DELETE_SUCCESS':
+      return {
+        ...state,
+        loadingDelete: false,
+        successDelete: true,
+      };
+    case 'DELETE_FAIL':
+      return { ...state, loadingDelete: false, successDelete: false };
+
+    case 'DELETE_RESET':
+      return { ...state, loadingDelete: false, successDelete: false };
     default:
       return state;
   }
 };
 
 export default function ProductListScreen() {
-  const [{ loading, error, products, pages, loadingCreate }, dispatch] =
-    useReducer(reducer, {
-      loading: true,
-      error: '',
-    });
+  const [
+    {
+      loading,
+      error,
+      products,
+      pages,
+      loadingCreate,
+      loadingDelete,
+      successDelete,
+    },
+    dispatch,
+  ] = useReducer(reducer, {
+    loading: true,
+    error: '',
+  });
 
   const navigate = useNavigate();
   const { search } = useLocation();
@@ -67,8 +90,12 @@ export default function ProductListScreen() {
         dispatch({ type: 'FETCH_FAIL', payload: err.message });
       }
     };
-    fetchData();
-  }, [page, userInfo]);
+    if (successDelete) {
+      dispatch({ type: 'DELETE_RESET' });
+    } else {
+      fetchData();
+    }
+  }, [page, userInfo, successDelete]);
 
   useEffect(() => {
     document.title = 'ShopFusion | Admin | ProductList';
@@ -110,9 +137,40 @@ export default function ProductListScreen() {
     });
   };
 
+  const deleteHandler = (product) => {
+    confirmAlert({
+      title: 'Confirm Delete',
+      message: `Are you sure you want to delete "${product.name}"?`,
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: async () => {
+            try {
+              await axios.delete(`/api/products/${product._id}`, {
+                headers: { Authorization: `Bearer ${userInfo.token}` },
+              });
+              toast.success('Product deleted successfully');
+              dispatch({ type: 'DELETE_SUCCESS' });
+            } catch (err) {
+              toast.error(getError(err));
+              dispatch({ type: 'DELETE_FAIL' });
+            }
+          },
+        },
+        {
+          label: 'No',
+          onClick: () => {
+            toast.info('Product deletion cancelled');
+          },
+        },
+      ],
+    });
+  };
+
   return (
     <div className="container my-5">
       {loadingCreate && <LoadingBox />}
+      {loadingDelete && <LoadingBox></LoadingBox>}
       {loading ? (
         <LoadingBox />
       ) : error ? (
@@ -149,6 +207,7 @@ export default function ProductListScreen() {
                         <th scope="col">📂 Category</th>
                         <th scope="col">🏷️ Brand</th>
                         <th scope="col">⚙️ Action</th>
+                        <th scope="col">⚙️ Delete</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -168,6 +227,16 @@ export default function ProductListScreen() {
                               }
                             >
                               ✏️ Edit
+                            </Button>
+                          </td>
+                          <td>
+                            <Button
+                              type="button"
+                              variant="danger"
+                              size="sm"
+                              onClick={() => deleteHandler(product)}
+                            >
+                              🗑️ Delete
                             </Button>
                           </td>
                         </tr>

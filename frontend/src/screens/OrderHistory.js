@@ -140,7 +140,7 @@ export default function OrderHistoryScreen() {
                         )}
                       </td>
                       <td>
-                        {order.isDelivered ? (
+                        {order.isDelivered && order.deliveredAt ? (
                           <span className="text-success fw-bold">
                             {order.deliveredAt.substring(0, 10)}
                           </span>

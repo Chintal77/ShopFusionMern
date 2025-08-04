@@ -193,11 +193,7 @@ export default function OrderScreen() {
               </Card.Text>
               {order.isDelivered ? (
                 <MessageBox variant="success">
-                  Delivered to{' '}
-                  <strong>
-                    {order.shippingAddress.address},{' '}
-                    {order.shippingAddress.city}, {order.shippingAddress.pin}
-                  </strong>
+                  Delivered to <strong>{order.shippingAddress.name}</strong>
                   <br />
                   at{' '}
                   {new Date(order.updatedAt).toLocaleString('en-IN', {
