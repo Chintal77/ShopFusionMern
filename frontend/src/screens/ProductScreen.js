@@ -125,136 +125,173 @@ function ProductScreen({ cartItems, setCartItems }) {
   const finalPrice = product.price - discountAmount;
 
   return (
-    <section className="product-screen-container">
-      <div className="product-image-container">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="product-img"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = '/images/broken.png';
-          }}
-        />
-        {product.badge && <span className="badge">{product.badge}</span>}
-      </div>
-
-      <div className="product-detail-info">
-        <div className="product-header">
-          <h1 className="product-name">{product.name}</h1>
-        </div>
-
-        <div className="product-rating">
-          ⭐ {product.rating} ({product.numReviews} reviews)
-        </div>
-
-        <div className="product-price">
-          <span className="price-final">₹{finalPrice.toLocaleString()}</span>{' '}
-          <span className="price-original">
-            ₹{product.price.toLocaleString()}
-          </span>{' '}
-          <span className="price-discount">({discountPercentage}% OFF)</span>
-        </div>
-
-        <p className="product-description">{product.description}</p>
-
-        {product.highlights && (
-          <ul className="product-highlights">
-            {product.highlights.map((point, index) => (
-              <li key={index}>🧵 {point}</li>
-            ))}
-          </ul>
-        )}
-
-        {product.sizeFit && (
-          <div className="size-fit">
-            <p>
-              <strong>Size & Fit:</strong> {product.sizeFit}
-            </p>
+    <div className="container py-5">
+      <div className="row g-5">
+        {/* Product Image */}
+        <div className="col-md-6">
+          <div className="card shadow-sm border-0 position-relative">
+            {product.badge && (
+              <span className="position-absolute top-0 start-0 translate-middle-y bg-danger text-white px-3 py-1 rounded-end fs-6 mt-3 ms-2 shadow-sm">
+                {typeof product.badge === 'string'
+                  ? product.badge
+                  : `${product.badge}% OFF`}
+              </span>
+            )}
+            <img
+              src={product.image}
+              alt={product.name}
+              className="img-fluid rounded"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = '/images/broken.png';
+              }}
+            />
           </div>
-        )}
-
-        {product.specifications && (
-          <table className="spec-table">
-            <tbody>
-              {Object.entries(product.specifications).map(([key, value]) => (
-                <tr key={key}>
-                  <td className="spec-key">{key.toUpperCase()}</td>
-                  <td className="spec-value">{value}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-
-        <div className="extra-info">
-          {product.brand && (
-            <p>
-              <strong>Brand:</strong> {product.brand}
-            </p>
-          )}
-          {product.category && (
-            <p>
-              <strong>Category:</strong> {product.category}
-            </p>
-          )}
-          {product.seller && (
-            <p>
-              <strong>Seller:</strong> {product.seller}
-            </p>
-          )}
-          {product.delivery && (
-            <p>
-              <strong>Delivery:</strong> {product.delivery}
-            </p>
-          )}
-          {product.returnPolicy && (
-            <p>
-              <strong>Return Policy:</strong> {product.returnPolicy}
-            </p>
-          )}
         </div>
 
-        <p
-          className={`stock ${
-            product.countInStock > 0 ? 'in-stock' : 'out-of-stock'
-          }`}
-        >
-          {product.countInStock > 0 ? '✅ In Stock' : '❌ Out of Stock'}
-        </p>
+        {/* Product Info */}
+        <div className="col-md-6">
+          <div className="d-flex flex-column gap-3">
+            <h1 className="fw-bold">{product.name}</h1>
 
-        <button
-          className={`btn-cart ${
-            product.countInStock === 0
-              ? 'btn-out'
-              : existingQty >= product.countInStock
-              ? 'btn-limit'
-              : 'btn-add'
-          }`}
-          disabled={
-            product.countInStock === 0 || existingQty >= product.countInStock
-          }
-          onClick={handleAddToCart}
-          title={
-            product.countInStock === 0
-              ? 'Out of stock'
-              : existingQty >= product.countInStock
-              ? 'You have reached the max quantity available.'
-              : ''
-          }
-        >
-          {product.countInStock === 0
-            ? 'Out of Stock'
-            : existingQty >= product.countInStock
-            ? 'Limit Reached'
-            : 'Add to Cart'}
-        </button>
+            <div className="text-muted">
+              ⭐ {product.rating} ({product.numReviews} reviews)
+            </div>
 
-        <Link to="/" className="back-home-link">
-          🔙 Back to Products
-        </Link>
+            {/* Price with discount block */}
+            <div className="bg-light p-3 rounded d-flex flex-column gap-1 shadow-sm">
+              <h4 className="fw-bold text-success m-0">
+                ₹{finalPrice.toLocaleString()}
+              </h4>
+              <div className="d-flex align-items-center gap-2">
+                <del className="text-secondary">
+                  ₹{product.price.toLocaleString()}
+                </del>
+                <span className="badge bg-danger">
+                  {discountPercentage}% OFF
+                </span>
+              </div>
+            </div>
+
+            {/* Description */}
+            <p className="text-muted">{product.description}</p>
+
+            {/* Highlights */}
+            {product.highlights?.length > 0 && (
+              <div>
+                <h6 className="fw-semibold">🔍 Highlights</h6>
+                <ul className="list-group list-group-flush border rounded shadow-sm">
+                  {product.highlights.map((point, index) => (
+                    <li key={index} className="list-group-item">
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Size & Fit */}
+            {product.sizeFit && (
+              <p className="mb-1">
+                <strong>📏 Size & Fit:</strong> {product.sizeFit}
+              </p>
+            )}
+
+            {/* Specifications */}
+            {product.specifications && (
+              <div className="table-responsive">
+                <h6 className="fw-semibold mb-2">📑 Specifications</h6>
+                <table className="table table-bordered rounded shadow-sm overflow-hidden">
+                  <tbody>
+                    {Object.entries(product.specifications).map(
+                      ([key, value]) => (
+                        <tr key={key}>
+                          <th className="bg-light text-uppercase">{key}</th>
+                          <td>{value}</td>
+                        </tr>
+                      )
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Extra Info */}
+            <div className="text-muted">
+              {product.brand && (
+                <div>
+                  🏷️ <strong>Brand:</strong> {product.brand}
+                </div>
+              )}
+              {product.category && (
+                <div>
+                  📂 <strong>Category:</strong> {product.category}
+                </div>
+              )}
+              {product.seller && (
+                <div>
+                  🛍️ <strong>Seller:</strong> {product.seller}
+                </div>
+              )}
+              {product.delivery && (
+                <div>
+                  🚚 <strong>Delivery:</strong> {product.delivery}
+                </div>
+              )}
+              {product.returnPolicy && (
+                <div>
+                  ↩️ <strong>Return:</strong> {product.returnPolicy}
+                </div>
+              )}
+            </div>
+
+            {/* Stock Status */}
+            <div
+              className={`fw-semibold ${
+                product.countInStock > 0 ? 'text-success' : 'text-danger'
+              }`}
+            >
+              {product.countInStock > 0 ? '✅ In Stock' : '❌ Out of Stock'}
+            </div>
+
+            {/* Add to Cart */}
+            <button
+              className={`btn btn-lg ${
+                product.countInStock === 0
+                  ? 'btn-secondary'
+                  : existingQty >= product.countInStock
+                  ? 'btn-warning'
+                  : 'btn-primary'
+              } d-flex align-items-center justify-content-center gap-2`}
+              disabled={
+                product.countInStock === 0 ||
+                existingQty >= product.countInStock
+              }
+              onClick={handleAddToCart}
+              title={
+                product.countInStock === 0
+                  ? 'Out of stock'
+                  : existingQty >= product.countInStock
+                  ? 'You have reached the max quantity available.'
+                  : 'Add this item to your cart.'
+              }
+            >
+              🛒
+              {product.countInStock === 0
+                ? 'Out of Stock'
+                : existingQty >= product.countInStock
+                ? 'Limit Reached'
+                : 'Add to Cart'}
+            </button>
+
+            {/* Back link */}
+            <Link to="/" className="text-decoration-none mt-2">
+              ← Back to Products
+            </Link>
+          </div>
+        </div>
       </div>
-    </section>
+    </div>
   );
 }
 

@@ -147,7 +147,7 @@ function HomeScreen({ cartItems, setCartItems }) {
           </div>
         )}
 
-        <div className="products">
+        <div className="row">
           {loading ? (
             <p className="message">
               Products are loading from backend, please wait...
@@ -177,65 +177,84 @@ function HomeScreen({ cartItems, setCartItems }) {
                 : 0;
 
               return (
-                <div className="product-card" key={product.slug}>
-                  {product.badge && (
-                    <span className="badge">
-                      {typeof product.badge === 'string'
-                        ? product.badge
-                        : `${product.badge}% OFF`}
-                    </span>
-                  )}
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="product-image"
-                  />
-                  <div className="product-info">
-                    <h3 className="product-name">
-                      <Link to={`/product/${product._id}`}>{product.name}</Link>
-                    </h3>
-                    <p className="product-price">
-                      <span className="original-price">
-                        ₹{product.price.toLocaleString('en-IN')}
-                      </span>{' '}
-                      <span className="final-price">
-                        ₹{finalPrice.toLocaleString('en-IN')}
+                <div
+                  className="col-sm-6 col-md-4 col-lg-3 mb-4"
+                  key={product.slug}
+                >
+                  <div className="card h-100 shadow-sm position-relative border-0 hover-shadow transition">
+                    {product.badge && (
+                      <span className="badge bg-danger position-absolute top-0 start-0 m-2 rounded-pill shadow">
+                        {typeof product.badge === 'string'
+                          ? product.badge
+                          : `${product.badge}% OFF`}
                       </span>
-                    </p>
-                    <p className="product-discount">
-                      You save ₹{discountAmount.toLocaleString('en-IN')}
-                    </p>
-                    <p className="product-rating">
-                      ⭐ {product.rating}{' '}
-                      <span>({product.numReviews} reviews)</span>
-                    </p>
-                    <button
-                      className={`btn-cart ${
-                        product.countInStock === 0
-                          ? 'btn-out'
+                    )}
+
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="card-img-top img-fluid rounded-top"
+                      style={{ height: '400px', objectFit: 'cover' }}
+                    />
+
+                    <div className="card-body d-flex flex-column bg-light rounded-bottom">
+                      <h5 className="card-title text-truncate mb-2">
+                        <Link
+                          to={`/product/${product._id}`}
+                          className="text-decoration-none text-dark fw-semibold"
+                        >
+                          {product.name}
+                        </Link>
+                      </h5>
+
+                      <p className="mb-1">
+                        <span className="text-muted text-decoration-line-through me-2">
+                          ₹{product.price.toLocaleString('en-IN')}
+                        </span>
+                        <span className="fw-bold text-success">
+                          ₹{finalPrice.toLocaleString('en-IN')}
+                        </span>
+                      </p>
+
+                      <p className="text-danger small mb-1">
+                        You save ₹{discountAmount.toLocaleString('en-IN')}
+                      </p>
+
+                      <p className="mb-2">
+                        ⭐ {product.rating}{' '}
+                        <span className="text-muted small">
+                          ({product.numReviews} reviews)
+                        </span>
+                      </p>
+
+                      <button
+                        className={`btn mt-auto fw-semibold ${
+                          product.countInStock === 0
+                            ? 'btn-outline-secondary'
+                            : currentQty >= product.countInStock
+                            ? 'btn-outline-warning'
+                            : 'btn-outline-primary'
+                        }`}
+                        disabled={
+                          product.countInStock === 0 ||
+                          currentQty >= product.countInStock
+                        }
+                        onClick={() => handleAddToCart(product)}
+                        title={
+                          product.countInStock === 0
+                            ? 'Out of stock'
+                            : currentQty >= product.countInStock
+                            ? 'You have reached the max quantity available.'
+                            : ''
+                        }
+                      >
+                        {product.countInStock === 0
+                          ? 'Out of Stock'
                           : currentQty >= product.countInStock
-                          ? 'btn-limit'
-                          : 'btn-add'
-                      }`}
-                      disabled={
-                        product.countInStock === 0 ||
-                        currentQty >= product.countInStock
-                      }
-                      onClick={() => handleAddToCart(product)}
-                      title={
-                        product.countInStock === 0
-                          ? 'Out of stock'
-                          : currentQty >= product.countInStock
-                          ? 'You have reached the max quantity available.'
-                          : ''
-                      }
-                    >
-                      {product.countInStock === 0
-                        ? 'Out of Stock'
-                        : currentQty >= product.countInStock
-                        ? 'Limit Reached'
-                        : 'Add to Cart'}
-                    </button>
+                          ? 'Limit Reached'
+                          : 'Add to Cart'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
