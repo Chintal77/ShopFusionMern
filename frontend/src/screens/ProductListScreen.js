@@ -112,18 +112,6 @@ export default function ProductListScreen() {
 
   return (
     <div className="container my-5">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="fw-bold text-primary">📦 Manage Products</h2>
-        <Button
-          type="button"
-          onClick={createHandler}
-          variant="success"
-          className="shadow-sm"
-        >
-          ➕ Create Product
-        </Button>
-      </div>
-
       {loadingCreate && <LoadingBox />}
       {loading ? (
         <LoadingBox />
@@ -131,46 +119,81 @@ export default function ProductListScreen() {
         <MessageBox variant="danger">{error}</MessageBox>
       ) : (
         <>
-          <div className="table-responsive shadow-sm rounded">
-            <table className="table table-hover align-middle text-center">
-              <thead className="table-primary">
-                <tr>
-                  <th scope="col">🆔 ID</th>
-                  <th scope="col">📛 Name</th>
-                  <th scope="col">💰 Price</th>
-                  <th scope="col">📂 Category</th>
-                  <th scope="col">🏷️ Brand</th>
-                </tr>
-              </thead>
-              <tbody>
-                {products.map((product, index) => (
-                  <tr key={product._id} className="align-middle">
-                    <td className="text-muted small">{product._id}</td>
-                    <td className="fw-semibold">{product.name}</td>
-                    <td className="text-success">₹{product.price}</td>
-                    <td>{product.category}</td>
-                    <td>{product.brand}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          <div className="d-flex justify-content-center my-4 flex-wrap gap-2">
-            {[...Array(pages).keys()].map((x) => (
-              <Link
-                key={x + 1}
-                to={`/admin/products?page=${x + 1}`}
-                className={`btn ${
-                  Number(page) === x + 1
-                    ? 'btn-primary fw-bold'
-                    : 'btn-outline-secondary'
-                } shadow-sm`}
+          <div className="container my-5">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h2 className="fw-bold text-primary">📦 Manage Products</h2>
+              <Button
+                type="button"
+                onClick={createHandler}
+                variant="success"
+                className="shadow-sm"
               >
-                {x + 1}
-              </Link>
-            ))}
+                ➕ Create Product
+              </Button>
+            </div>
+
+            {loadingCreate && <LoadingBox />}
+            {loading ? (
+              <LoadingBox />
+            ) : error ? (
+              <MessageBox variant="danger">{error}</MessageBox>
+            ) : (
+              <>
+                <div className="table-responsive shadow-sm rounded overflow-hidden">
+                  <table className="table table-hover table-striped align-middle text-center mb-0">
+                    <thead className="table-primary text-nowrap">
+                      <tr>
+                        <th scope="col">🆔 ID</th>
+                        <th scope="col">📛 Name</th>
+                        <th scope="col">💰 Price</th>
+                        <th scope="col">📂 Category</th>
+                        <th scope="col">🏷️ Brand</th>
+                        <th scope="col">⚙️ Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {products.map((product) => (
+                        <tr key={product._id}>
+                          <td className="text-muted small">{product._id}</td>
+                          <td className="fw-semibold">{product.name}</td>
+                          <td className="text-success">₹{product.price}</td>
+                          <td>{product.category}</td>
+                          <td>{product.brand}</td>
+                          <td>
+                            <Button
+                              variant="outline-primary"
+                              size="sm"
+                              onClick={() =>
+                                navigate(`/admin/product/${product._id}`)
+                              }
+                            >
+                              ✏️ Edit
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination */}
+                <div className="d-flex justify-content-center my-4 flex-wrap gap-2">
+                  {[...Array(pages).keys()].map((x) => (
+                    <Link
+                      key={x + 1}
+                      to={`/admin/products?page=${x + 1}`}
+                      className={`btn ${
+                        Number(page) === x + 1
+                          ? 'btn-primary fw-bold'
+                          : 'btn-outline-secondary'
+                      } shadow-sm`}
+                    >
+                      {x + 1}
+                    </Link>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </>
       )}

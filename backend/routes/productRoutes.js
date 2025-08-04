@@ -74,6 +74,54 @@ productRouter.post(
   })
 );
 
+productRouter.put(
+  '/:id',
+  isAuth,
+  isAdmin,
+  expressAsyncHandler(async (req, res) => {
+    const productId = req.params.id;
+    const product = await Product.findById(productId);
+
+    if (product) {
+      // Required fields
+      product.name = req.body.name;
+      product.slug = req.body.slug;
+      product.price = req.body.price;
+      product.image = req.body.image;
+      product.category = req.body.category;
+      product.brand = req.body.brand;
+      product.countInStock = req.body.countInStock;
+      product.description = req.body.description;
+      product.rating = req.body.rating;
+      product.numReviews = req.body.numReviews;
+
+      // Optional fields
+      product.badge = req.body.badge || '';
+      product.seller = req.body.seller || '';
+      product.delivery = req.body.delivery || '';
+      product.returnPolicy = req.body.returnPolicy || '';
+      product.highlights = req.body.highlights || [];
+      product.sizeFit = req.body.sizeFit || '';
+
+      // Nested specifications object
+      product.specifications = {
+        fabric: req.body.specifications?.fabric || '',
+        pattern: req.body.specifications?.pattern || '',
+        sleeve: req.body.specifications?.sleeve || '',
+        collar: req.body.specifications?.collar || '',
+        fit: req.body.specifications?.fit || '',
+        occasion: req.body.specifications?.occasion || '',
+        washCare: req.body.specifications?.washCare || '',
+      };
+
+      const updatedProduct = await product.save();
+      res.send({ message: 'Product Updated', product: updatedProduct });
+    } else {
+      res.status(404).send({ message: 'Product Not Found' });
+    }
+  })
+);
+
 const PAGE_SIZEE = 4;
 productRouter.get(
   '/search',

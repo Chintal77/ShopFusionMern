@@ -179,7 +179,11 @@ function HomeScreen({ cartItems, setCartItems }) {
               return (
                 <div className="product-card" key={product.slug}>
                   {product.badge && (
-                    <span className="badge">{product.badge}</span>
+                    <span className="badge">
+                      {typeof product.badge === 'string'
+                        ? product.badge
+                        : `${product.badge}% OFF`}
+                    </span>
                   )}
                   <img
                     src={product.image}

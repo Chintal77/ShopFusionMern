@@ -22,6 +22,7 @@ import AdminRoute from './components/AdminRoute';
 import DashboardScreen from './screens/DashBoardScreen';
 import ProductListScreen from './screens/ProductListScreen';
 import 'react-confirm-alert/src/react-confirm-alert.css';
+import ProductEditScreen from './screens/ProductEditScreen';
 
 function App() {
   const [cartItems, setCartItems] = useState(() => {
@@ -113,6 +114,15 @@ function App() {
               element={
                 <AdminRoute>
                   <ProductListScreen />
+                </AdminRoute>
+              }
+            ></Route>
+
+            <Route
+              path="/admin/product/:id"
+              element={
+                <AdminRoute>
+                  <ProductEditScreen />
                 </AdminRoute>
               }
             ></Route>
