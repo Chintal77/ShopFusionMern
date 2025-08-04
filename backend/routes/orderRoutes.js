@@ -3,7 +3,7 @@ import expressAsyncHandler from 'express-async-handler';
 import Order from '../models/orderModel.js';
 import User from '../models/userModel.js';
 import Product from '../models/productModel.js';
-import { isAuth, isAdmin } from '../utils.js';
+import { isAuth, isAdmin, updateOrderStatus } from '../utils.js';
 import mongoose from 'mongoose';
 
 import { startOfDay, endOfDay } from 'date-fns';
@@ -19,6 +19,8 @@ orderRouter.get(
     res.send(orders);
   })
 );
+
+orderRouter.put('/:id/status', isAuth, updateOrderStatus);
 
 orderRouter.post(
   '/',

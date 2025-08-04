@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import Order from '../backend/models/orderModel.js';
 
 export const generateToken = (user) => {
   return jwt.sign(
@@ -37,5 +38,24 @@ export const isAdmin = (req, res, next) => {
     next();
   } else {
     res.status(401).send({ message: 'Invalid Admin Token' });
+  }
+};
+
+export const updateOrderStatus = async (req, res) => {
+  const { id } = req.params;
+  const { field, value } = req.body;
+
+  try {
+    const order = await Order.findById(id);
+    if (!order) {
+      return res.status(404).send({ message: 'Order not found' });
+    }
+
+    order[field] = value; // Dynamically update the specified status field
+    await order.save();
+
+    res.send({ message: 'Order status updated', order });
+  } catch (error) {
+    res.status(500).send({ message: 'Failed to update order status' });
   }
 };
