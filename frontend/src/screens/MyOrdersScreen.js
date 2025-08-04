@@ -193,7 +193,18 @@ export default function OrderScreen() {
               </Card.Text>
               {order.isDelivered ? (
                 <MessageBox variant="success">
-                  Delivered at {order.deliveredAt}
+                  Delivered to{' '}
+                  <strong>
+                    {order.shippingAddress.address},{' '}
+                    {order.shippingAddress.city}, {order.shippingAddress.pin}
+                  </strong>
+                  <br />
+                  at{' '}
+                  {new Date(order.updatedAt).toLocaleString('en-IN', {
+                    timeZone: 'Asia/Kolkata',
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                  })}
                 </MessageBox>
               ) : (
                 <MessageBox variant="danger" style={{ color: 'red' }}>
