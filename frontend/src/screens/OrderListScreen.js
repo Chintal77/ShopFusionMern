@@ -147,7 +147,10 @@ export default function OrderListScreen() {
                       ₹{order.totalPrice.toFixed(2)}
                     </td>
                     <td>
-                      {order.isPaid ? (
+                      {order.isCancelled ? (
+                        // If cancelled, show nothing here (blank)
+                        <span></span>
+                      ) : order.isPaid ? (
                         <span style={{ color: 'green', fontWeight: 'bold' }}>
                           Paid
                         </span>
@@ -159,41 +162,29 @@ export default function OrderListScreen() {
                     </td>
 
                     <td>
-                      {(() => {
-                        if (order.isDelivered) {
-                          return (
-                            <span
-                              style={{ color: 'green', fontWeight: 'bold' }}
-                            >
-                              ✅ Delivered
-                            </span>
-                          );
-                        } else if (order.outForDelivery) {
-                          return (
-                            <span
-                              style={{ color: 'orange', fontWeight: 'bold' }}
-                            >
-                              📤 Out for Delivery
-                            </span>
-                          );
-                        } else if (order.isDispatched) {
-                          return (
-                            <span style={{ color: 'blue', fontWeight: 'bold' }}>
-                              🚚 Dispatched
-                            </span>
-                          );
-                        } else if (order.isPacking) {
-                          return (
-                            <span style={{ color: 'teal', fontWeight: 'bold' }}>
-                              📦 Packing
-                            </span>
-                          );
-                        } else {
-                          return (
-                            <span style={{ color: 'gray' }}>⌛ Pending</span>
-                          );
-                        }
-                      })()}
+                      {order.isCancelled ? (
+                        <span style={{ color: 'red', fontWeight: 'bold' }}>
+                          ❌ Cancelled
+                        </span>
+                      ) : order.isDelivered ? (
+                        <span style={{ color: 'green', fontWeight: 'bold' }}>
+                          ✅ Delivered
+                        </span>
+                      ) : order.outForDelivery ? (
+                        <span style={{ color: 'orange', fontWeight: 'bold' }}>
+                          📤 Out for Delivery
+                        </span>
+                      ) : order.isDispatched ? (
+                        <span style={{ color: 'blue', fontWeight: 'bold' }}>
+                          🚚 Dispatched
+                        </span>
+                      ) : order.isPacking ? (
+                        <span style={{ color: 'teal', fontWeight: 'bold' }}>
+                          📦 Packing
+                        </span>
+                      ) : (
+                        <span style={{ color: 'gray' }}>⌛ Pending</span>
+                      )}
                     </td>
 
                     {order.isPaid && !order.isDelivered ? (

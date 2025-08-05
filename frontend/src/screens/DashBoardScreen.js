@@ -39,7 +39,17 @@ export default function DashboardScreen() {
   const { state } = useContext(Store);
   const { userInfo } = state;
   const refunds = summary?.refunds || { count: 0, totalRefunded: 0 };
-  const paymentMethods = summary?.paymentMethods || [];
+
+  const cancelledCount = summary?.orderStats?.cancelledCount || 0;
+  const cancelledRevenue = summary?.orderStats?.cancelledRevenue || 0;
+  const unpaidCount = summary?.orderStats?.unpaidCount || 0;
+  const unpaidRevenue = summary?.orderStats?.unpaidRevenue || 0;
+
+  const adjustedToBeCollectedCount = Math.max(0, unpaidCount - cancelledCount);
+  const adjustedToBeCollectedRevenue = Math.max(
+    0,
+    unpaidRevenue - cancelledRevenue
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -161,15 +171,16 @@ export default function DashboardScreen() {
               <Card className="shadow-sm border-0 rounded-4 bg-warning text-dark">
                 <Card.Body className="text-center">
                   <Card.Title className="fs-4 fw-bold">
-                    {summary.orderStats.unpaidCount} Orders
+                    {adjustedToBeCollectedCount} Orders
                   </Card.Title>
                   <Card.Text className="mb-1">💰 To Be Collected</Card.Text>
                   <Card.Text>
-                    ₹ {summary.orderStats.unpaidRevenue.toFixed(2)}
+                    ₹ {adjustedToBeCollectedRevenue.toFixed(2)}
                   </Card.Text>
                 </Card.Body>
               </Card>
             </Col>
+
             <Col md={3}>
               <Card className="shadow-sm border-0 rounded-4 bg-info text-white">
                 <Card.Body className="text-center">

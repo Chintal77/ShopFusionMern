@@ -109,6 +109,7 @@ export default function OrderHistoryScreen() {
                     <th>TOTAL</th>
                     <th>PAID</th>
                     <th>DELIVERED</th>
+                    <th>CANCELLED</th>
                     <th>ACTIONS</th>
                   </tr>
                 </thead>
@@ -116,15 +117,17 @@ export default function OrderHistoryScreen() {
                   {currentOrders.map((order) => (
                     <tr key={order._id} className="order-row">
                       <td>
-                        {' '}
                         <span title={order._id} style={{ cursor: 'help' }}>
                           {order._id.substring(0, 8)}...
                         </span>
                       </td>
                       <td>{order.createdAt.substring(0, 10)}</td>
                       <td>₹{order.totalPrice.toFixed(2)}</td>
+
                       <td>
-                        {order.isPaid ? (
+                        {order.isCancelled ? (
+                          <span className="text-muted">--</span>
+                        ) : order.isPaid ? (
                           <span className="text-success fw-bold">
                             {new Date(order.paidAt).toLocaleString('en-IN', {
                               timeZone: 'Asia/Kolkata',
@@ -139,15 +142,27 @@ export default function OrderHistoryScreen() {
                           <span className="text-danger">No</span>
                         )}
                       </td>
+
                       <td>
-                        {order.isDelivered && order.deliveredAt ? (
-                          <span className="text-success fw-bold">
-                            {order.deliveredAt.substring(0, 10)}
-                          </span>
+                        {order.isCancelled ? (
+                          <span className="text-muted">--</span>
+                        ) : order.isDelivered ? (
+                          <span className="text-success fw-bold">Yes</span>
                         ) : (
                           <span className="text-danger">No</span>
                         )}
                       </td>
+
+                      <td>
+                        {order.isCancelled ? (
+                          <span className="text-danger fw-semibold">
+                            {order.cancelledBy === 'admin' ? 'Admin' : 'System'}
+                          </span>
+                        ) : (
+                          <span className="text-muted">--</span>
+                        )}
+                      </td>
+
                       <td>
                         <Button
                           size="sm"

@@ -3,7 +3,7 @@ import expressAsyncHandler from 'express-async-handler';
 import Order from '../models/orderModel.js';
 import User from '../models/userModel.js';
 import Product from '../models/productModel.js';
-import { isAuth, isAdmin, updateOrderStatus } from '../utils.js';
+import { isAuth, isAdmin, updateOrderStatus, cancelOrder } from '../utils.js';
 import mongoose from 'mongoose';
 
 import { startOfDay, endOfDay } from 'date-fns';
@@ -263,13 +263,52 @@ orderRouter.get(
   isAuth,
   expressAsyncHandler(async (req, res) => {
     const order = await Order.findById(req.params.id);
-    if (order) {
-      res.send(order);
-    } else {
-      res.status(404).send({ message: 'Order Not Found' });
+
+    if (!order) {
+      return res.status(404).send({ message: 'Order Not Found' });
     }
+
+    // ⏱️ Auto-cancel unpaid orders after 1 minutes
+    const ONE_MINUTES = 1 * 60 * 1000;
+    const isEligibleForAutoCancel =
+      !order.isPaid &&
+      !order.isCancelled &&
+      new Date() - order.createdAt > ONE_MINUTES;
+
+    if (isEligibleForAutoCancel) {
+      order.isCancelled = true;
+      order.cancelledBy = 'system';
+      order.cancelledAt = new Date();
+      await order.save();
+    }
+
+    res.send(order);
   })
 );
+
+orderRouter.put('/:id/cancel', isAuth, isAdmin, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).send({ message: 'Order not found' });
+    }
+
+    if (order.isCancelled) {
+      return res.status(400).send({ message: 'Order already cancelled' });
+    }
+
+    order.isCancelled = true;
+    order.cancelledBy = 'admin';
+    order.cancelledAt = new Date();
+
+    await order.save();
+    res.send({ message: 'Order cancelled by admin', order });
+  } catch (err) {
+    res
+      .status(500)
+      .send({ message: 'Internal server error', error: err.message });
+  }
+});
 
 orderRouter.put(
   '/:id/pay',

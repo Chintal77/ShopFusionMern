@@ -59,3 +59,21 @@ export const updateOrderStatus = async (req, res) => {
     res.status(500).send({ message: 'Failed to update order status' });
   }
 };
+
+export const cancelOrder = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (order) {
+      if (order.isPaid) {
+        return res.status(400).send({ message: 'Cannot cancel a paid order' });
+      }
+      order.isCancelled = true;
+      await order.save();
+      res.send({ message: 'Order cancelled successfully' });
+    } else {
+      res.status(404).send({ message: 'Order not found' });
+    }
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};

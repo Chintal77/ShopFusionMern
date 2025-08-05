@@ -52,6 +52,9 @@ const orderSchema = new mongoose.Schema(
     isPacking: { type: Boolean, default: false },
     isDispatched: { type: Boolean, default: false },
     outForDelivery: { type: Boolean, default: false },
+    isCancelled: { type: Boolean, default: false },
+    cancelledBy: { type: String, enum: ['admin', 'system'], default: null },
+    cancelledAt: { type: Date, default: null },
   },
   {
     timestamps: true,

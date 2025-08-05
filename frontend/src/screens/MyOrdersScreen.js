@@ -122,11 +122,24 @@ export default function OrderScreen() {
       { label: 'Delivered', completed: order.isDelivered },
     ];
 
+    const isFirstStep = (index) => index === 0;
+
     return (
       <div className="order-progress">
         {steps.map((step, index) => {
           const isCurrent = step.isCurrent;
           const isCompleted = step.completed;
+
+          // 👇 Customize first step icon when not paid and not delivered
+          const icon =
+            isFirstStep(index) && !order.isPaid && !order.isDelivered
+              ? '❗'
+              : isCompleted
+              ? '✓'
+              : isCurrent
+              ? '🕒'
+              : index + 1;
+
           return (
             <div
               key={index}
@@ -134,9 +147,7 @@ export default function OrderScreen() {
                 isCurrent ? 'current' : ''
               }`}
             >
-              <div className="circle">
-                {isCompleted ? '✓' : isCurrent ? '🕒' : index + 1}
-              </div>
+              <div className="circle">{icon}</div>
               <div className="label">{step.label}</div>
             </div>
           );
@@ -212,6 +223,45 @@ export default function OrderScreen() {
       </Helmet>
       <h1 className="my-3">Order {orderId}</h1>
 
+      {order.isCancelled && (
+        <Card className="mb-4 border-danger border-2 shadow-lg bg-light bg-gradient">
+          <Card.Body>
+            <div className="d-flex align-items-center mb-2">
+              <i className="bi bi-x-octagon-fill text-danger fs-3 me-3"></i>
+              <Card.Title className="text-danger fw-bold mb-0 fs-4">
+                Order Cancelled
+              </Card.Title>
+            </div>
+            <Card.Text className="text-dark">
+              <div className="text-secondary mb-2">
+                This order was cancelled on{' '}
+                <strong>
+                  {new Date(
+                    order.cancelledAt || order.updatedAt
+                  ).toLocaleString('en-IN', {
+                    timeZone: 'Asia/Kolkata',
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                  })}
+                </strong>
+              </div>
+              <div
+                className="px-3 py-2 mt-2 rounded fw-semibold text-white"
+                style={{
+                  backgroundColor: '#dc3545', // Bootstrap danger color
+                  display: 'inline-block',
+                  fontSize: '0.95rem',
+                }}
+              >
+                {order.cancelledBy === 'admin'
+                  ? 'Cancelled by Admin'
+                  : 'Automatically cancelled due to non-payment'}
+              </div>
+            </Card.Text>
+          </Card.Body>
+        </Card>
+      )}
+
       {renderOrderProgress()}
       <Row>
         <Col md={8}>
@@ -225,7 +275,7 @@ export default function OrderScreen() {
                 {order.shippingAddress.city}, {order.shippingAddress.pin},{' '}
                 {order.shippingAddress.country}
               </Card.Text>
-              {order.isDelivered ? (
+              {order.isCancelled ? null : order.isDelivered ? (
                 <MessageBox variant="success">
                   Delivered to <strong>{order.shippingAddress.name}</strong>
                   <br />
@@ -245,26 +295,28 @@ export default function OrderScreen() {
           </Card>
 
           {/* Payment Status */}
-          <Card className="mb-3">
-            <Card.Body>
-              <Card.Title>Payment</Card.Title>
-              {order.isPaid ? (
-                <MessageBox variant="success">
-                  Paid at{' '}
-                  {new Date(order.paidAt).toLocaleString('en-IN', {
-                    timeZone: 'Asia/Kolkata',
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </MessageBox>
-              ) : (
-                <MessageBox variant="danger">Not Paid</MessageBox>
-              )}
-            </Card.Body>
-          </Card>
+          {!order.isCancelled && (
+            <Card className="mb-3">
+              <Card.Body>
+                <Card.Title>Payment</Card.Title>
+                {order.isPaid ? (
+                  <MessageBox variant="success">
+                    Paid at{' '}
+                    {new Date(order.paidAt).toLocaleString('en-IN', {
+                      timeZone: 'Asia/Kolkata',
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </MessageBox>
+                ) : (
+                  <MessageBox variant="danger">Not Paid</MessageBox>
+                )}
+              </Card.Body>
+            </Card>
+          )}
 
           {/* Items */}
           <Card className="mb-3 card-items">
@@ -328,65 +380,116 @@ export default function OrderScreen() {
             </Card.Body>
           </Card>
 
-          {/* Display Payment Method */}
-          {!order.isPaid && (
-            <Form>
-              <div className="d-flex flex-wrap gap-2 mt-2">
-                {paymentOptions.map((method) => (
-                  <div
-                    key={method.id}
-                    className={`d-flex align-items-center border rounded px-3 py-2 ${
-                      selectedPaymentMethod === method.id
-                        ? 'border-primary bg-light'
-                        : ''
-                    }`}
-                    style={{ cursor: 'pointer', minWidth: '200px' }}
-                    onClick={() => setSelectedPaymentMethod(method.id)}
-                  >
-                    <Form.Check
-                      inline
-                      name="paymentMethod"
-                      type="radio"
-                      id={method.id}
-                      value={method.id}
-                      checked={selectedPaymentMethod === method.id}
-                      onChange={(e) => setSelectedPaymentMethod(e.target.value)}
-                      className="me-2"
-                    />
-                    <img
-                      src={method.icon}
-                      alt={method.label}
-                      className="me-2"
-                      style={{
-                        width: '22px',
-                        height: '22px',
-                        objectFit: 'contain',
-                      }}
-                    />
-                    <label htmlFor={method.id} className="mb-0 small">
-                      {method.label}
-                    </label>
-                  </div>
-                ))}
-              </div>
-
-              {/* PayPal Buttons */}
-              {selectedPaymentMethod === 'PayPal' && (
-                <div className="mt-3">
-                  {isPending ? (
-                    <LoadingBox />
-                  ) : (
-                    <PayPalButtons
-                      createOrder={createOrder}
-                      onApprove={onApprove}
-                      onError={onError}
-                    />
-                  )}
-                  {loadingPay && <LoadingBox />}
+          {/* Display Payment Method or Cancel Button for Admin */}
+          {/* Display Payment Method or Cancel Button for Admin */}
+          {!order.isPaid &&
+            (userInfo.isAdmin ? (
+              order.isCancelled ? (
+                <Button variant="secondary" className="w-100" disabled>
+                  Order Cancelled
+                </Button>
+              ) : (
+                <Button
+                  variant="danger"
+                  className="w-100"
+                  onClick={async () => {
+                    try {
+                      await axios.put(
+                        `/api/orders/${orderId}/cancel`,
+                        {},
+                        {
+                          headers: {
+                            authorization: `Bearer ${userInfo.token}`,
+                          },
+                        }
+                      );
+                      toast.success('Order cancelled successfully');
+                      const { data: updatedOrder } = await axios.get(
+                        `/api/orders/${orderId}`,
+                        {
+                          headers: {
+                            authorization: `Bearer ${userInfo.token}`,
+                          },
+                        }
+                      );
+                      dispatch({
+                        type: 'FETCH_SUCCESS',
+                        payload: updatedOrder,
+                      });
+                    } catch (err) {
+                      toast.error(getError(err));
+                    }
+                  }}
+                >
+                  Cancel Order
+                </Button>
+              )
+            ) : order.isCancelled ? (
+              <MessageBox variant="danger">
+                {order.cancelledBy === 'admin'
+                  ? 'Order was cancelled by admin.'
+                  : 'Order was automatically cancelled due to non-payment within the expected time window.'}
+              </MessageBox>
+            ) : (
+              <Form>
+                <div className="d-flex flex-wrap gap-2 mt-2">
+                  {paymentOptions.map((method) => (
+                    <div
+                      key={method.id}
+                      className={`d-flex align-items-center border rounded px-3 py-2 ${
+                        selectedPaymentMethod === method.id
+                          ? 'border-primary bg-light'
+                          : ''
+                      }`}
+                      style={{ cursor: 'pointer', minWidth: '200px' }}
+                      onClick={() => setSelectedPaymentMethod(method.id)}
+                    >
+                      <Form.Check
+                        inline
+                        name="paymentMethod"
+                        type="radio"
+                        id={method.id}
+                        value={method.id}
+                        checked={selectedPaymentMethod === method.id}
+                        onChange={(e) =>
+                          setSelectedPaymentMethod(e.target.value)
+                        }
+                        className="me-2"
+                      />
+                      <img
+                        src={method.icon}
+                        alt={method.label}
+                        className="me-2"
+                        style={{
+                          width: '22px',
+                          height: '22px',
+                          objectFit: 'contain',
+                        }}
+                      />
+                      <label htmlFor={method.id} className="mb-0 small">
+                        {method.label}
+                      </label>
+                    </div>
+                  ))}
                 </div>
-              )}
-            </Form>
-          )}
+
+                {/* PayPal Buttons */}
+                {selectedPaymentMethod === 'PayPal' && (
+                  <div className="mt-3">
+                    {isPending ? (
+                      <LoadingBox />
+                    ) : (
+                      <PayPalButtons
+                        createOrder={createOrder}
+                        onApprove={onApprove}
+                        onError={onError}
+                      />
+                    )}
+                    {loadingPay && <LoadingBox />}
+                  </div>
+                )}
+              </Form>
+            ))}
         </Col>
       </Row>
 
