@@ -193,6 +193,14 @@ function Header() {
                           📜 Manage Orders
                         </button>
                       </li>
+                      <li>
+                        <button
+                          className="dropdown-item"
+                          onClick={() => navigate('/admin/users')}
+                        >
+                          📜 Users
+                        </button>
+                      </li>
                     </>
                   ) : (
                     <>

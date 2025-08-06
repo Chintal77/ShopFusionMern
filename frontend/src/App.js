@@ -24,6 +24,8 @@ import ProductListScreen from './screens/ProductListScreen';
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import ProductEditScreen from './screens/ProductEditScreen';
 import OrderListScreen from './screens/OrderListScreen';
+import UserListScreen from './screens/UserListScreen';
+import UserEditScreen from './screens/UserEditScreen';
 
 function App() {
   const [cartItems, setCartItems] = useState(() => {
@@ -133,6 +135,24 @@ function App() {
               element={
                 <AdminRoute>
                   <ProductEditScreen />
+                </AdminRoute>
+              }
+            ></Route>
+
+            <Route
+              path="/admin/users"
+              element={
+                <AdminRoute>
+                  <UserListScreen />
+                </AdminRoute>
+              }
+            ></Route>
+
+            <Route
+              path="/admin/user/:id"
+              element={
+                <AdminRoute>
+                  <UserEditScreen />
                 </AdminRoute>
               }
             ></Route>
