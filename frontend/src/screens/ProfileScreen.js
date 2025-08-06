@@ -129,68 +129,86 @@ export default function ProfileScreen() {
   };
 
   return (
-    <div className="container small-container">
+    <div className="container py-5">
       <Helmet>
         <title>User Profile</title>
       </Helmet>
-      <h1 className="my-3">User Profile</h1>
-      <p>
-        <strong>User Type:</strong> {role}
-      </p>
 
-      <Form noValidate validated={validated} onSubmit={submitHandler}>
-        {[
-          { id: 'name', label: 'Name', required: true },
-          { id: 'email', label: 'Email', type: 'email', required: true },
-          { id: 'phone', label: 'Phone', required: true },
-          { id: 'address', label: 'Address', required: true },
-          { id: 'city', label: 'City', required: true },
-          { id: 'state', label: 'State', required: true },
-          { id: 'pinCode', label: 'Pin Code', required: true },
-        ].map(({ id, label, type = 'text', required }) => (
-          <Form.Group className="mb-3" controlId={id} key={id}>
-            <Form.Label>{label}</Form.Label>
-            <Form.Control
-              required={required}
-              type={type}
-              name={id}
-              value={form[id]}
-              onChange={handleChange}
-              placeholder={`Enter ${label.toLowerCase()}`}
-            />
-            <Form.Control.Feedback type="invalid">
-              Please enter {label.toLowerCase()}
-            </Form.Control.Feedback>
-          </Form.Group>
-        ))}
+      <div className="row justify-content-center">
+        <div className="col-md-8">
+          <div className="card shadow-sm border-0 rounded-4">
+            <div className="card-body p-4">
+              <h2 className="mb-3 text-center">Update Profile</h2>
+              <p className="text-muted text-center mb-4">
+                <strong>User Type:</strong> {role}
+              </p>
 
-        <Form.Group className="mb-3" controlId="password">
-          <Form.Label>New Password</Form.Label>
-          <Form.Control
-            type="password"
-            name="password"
-            value={form.password}
-            placeholder="Leave blank to keep unchanged"
-            onChange={handleChange}
-          />
-        </Form.Group>
+              <Form noValidate validated={validated} onSubmit={submitHandler}>
+                {[
+                  { id: 'name', label: 'Name', required: true },
+                  {
+                    id: 'email',
+                    label: 'Email',
+                    type: 'email',
+                    required: true,
+                  },
+                  { id: 'phone', label: 'Phone', required: true },
+                  { id: 'address', label: 'Address', required: true },
+                  { id: 'city', label: 'City', required: true },
+                  { id: 'state', label: 'State', required: true },
+                  { id: 'pinCode', label: 'Pin Code', required: true },
+                ].map(({ id, label, type = 'text', required }) => (
+                  <Form.Group className="mb-3" controlId={id} key={id}>
+                    <Form.Label>{label}</Form.Label>
+                    <Form.Control
+                      required={required}
+                      type={type}
+                      name={id}
+                      value={form[id]}
+                      onChange={handleChange}
+                      placeholder={`Enter ${label.toLowerCase()}`}
+                    />
+                    <Form.Control.Feedback type="invalid">
+                      Please enter {label.toLowerCase()}
+                    </Form.Control.Feedback>
+                  </Form.Group>
+                ))}
 
-        <Form.Group className="mb-3" controlId="confirmPassword">
-          <Form.Label>Confirm New Password</Form.Label>
-          <Form.Control
-            type="password"
-            name="confirmPassword"
-            value={form.confirmPassword}
-            onChange={handleChange}
-          />
-        </Form.Group>
+                <Form.Group className="mb-3" controlId="password">
+                  <Form.Label>New Password</Form.Label>
+                  <Form.Control
+                    type="password"
+                    name="password"
+                    value={form.password}
+                    placeholder="Leave blank to keep unchanged"
+                    onChange={handleChange}
+                  />
+                </Form.Group>
 
-        <div className="mb-3">
-          <Button type="submit" disabled={loadingUpdate}>
-            {loadingUpdate ? 'Updating...' : 'Update'}
-          </Button>
+                <Form.Group className="mb-4" controlId="confirmPassword">
+                  <Form.Label>Confirm New Password</Form.Label>
+                  <Form.Control
+                    type="password"
+                    name="confirmPassword"
+                    value={form.confirmPassword}
+                    onChange={handleChange}
+                  />
+                </Form.Group>
+
+                <div className="d-grid">
+                  <Button
+                    variant="primary"
+                    type="submit"
+                    disabled={loadingUpdate}
+                  >
+                    {loadingUpdate ? 'Updating...' : 'Update Profile'}
+                  </Button>
+                </div>
+              </Form>
+            </div>
+          </div>
         </div>
-      </Form>
+      </div>
     </div>
   );
 }
