@@ -3,13 +3,16 @@ import axios from 'axios';
 import React, { useContext, useEffect, useReducer, useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Pagination from 'react-bootstrap/Pagination';
-import Badge from 'react-bootstrap/Badge';
+
+import { toast } from 'react-toastify';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import LoadingBox from '../components/LoadingBox';
 import MessageBox from '../components/MessageBox';
 import { Store } from '../Store';
 import { getError } from '../utils';
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 
 // Reducer remains unchanged
 const reducer = (state, action) => {
@@ -20,6 +23,18 @@ const reducer = (state, action) => {
       return { ...state, orders: action.payload, loading: false };
     case 'FETCH_FAIL':
       return { ...state, loading: false, error: action.payload };
+    case 'DELETE_REQUEST':
+      return { ...state, loadingDelete: true, successDelete: false };
+    case 'DELETE_SUCCESS':
+      return {
+        ...state,
+        loadingDelete: false,
+        successDelete: true,
+      };
+    case 'DELETE_FAIL':
+      return { ...state, loadingDelete: false };
+    case 'DELETE_RESET':
+      return { ...state, loadingDelete: false, successDelete: false };
     default:
       return state;
   }
@@ -30,11 +45,14 @@ export default function OrderListScreen() {
   const { state } = useContext(Store);
   const { userInfo } = state;
 
-  const [{ loading, error, orders }, dispatch] = useReducer(reducer, {
-    loading: true,
-    error: '',
-    orders: [],
-  });
+  const [{ loading, error, orders, loadingDelete, successDelete }, dispatch] =
+    useReducer(reducer, {
+      loading: true,
+      error: '',
+      orders: [],
+      loadingDelete: false,
+      successDelete: false,
+    });
 
   const [currentPage, setCurrentPage] = useState(1);
   const ordersPerPage = 5;
@@ -52,8 +70,45 @@ export default function OrderListScreen() {
         dispatch({ type: 'FETCH_FAIL', payload: getError(err) });
       }
     };
-    fetchData();
-  }, [userInfo]);
+    if (successDelete) {
+      dispatch({ type: 'DELETE_RESET' });
+    } else {
+      fetchData();
+    }
+  }, [userInfo, successDelete]);
+
+  const deleteHandler = (order) => {
+    confirmAlert({
+      title: 'Confirm Delete',
+      message: `Are you sure you want to delete order ID: "${order._id}"?`,
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: async () => {
+            try {
+              dispatch({ type: 'DELETE_REQUEST' });
+
+              await axios.delete(`/api/orders/${order._id}`, {
+                headers: { Authorization: `Bearer ${userInfo.token}` },
+              });
+
+              toast.success('Order deleted successfully');
+              dispatch({ type: 'DELETE_SUCCESS' });
+            } catch (err) {
+              toast.error(getError(err));
+              dispatch({ type: 'DELETE_FAIL' });
+            }
+          },
+        },
+        {
+          label: 'No',
+          onClick: () => {
+            toast.info('Order deletion cancelled');
+          },
+        },
+      ],
+    });
+  };
 
   const updateStatus = async (orderId, field, value) => {
     try {
@@ -70,10 +125,6 @@ export default function OrderListScreen() {
       alert(getError(err));
     }
   };
-
-  const filteredOrders = orders.filter((order) =>
-    order._id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   // Pagination Logic
   const indexOfLastOrder = currentPage * ordersPerPage;
@@ -92,6 +143,7 @@ export default function OrderListScreen() {
       <Helmet>
         <title>🧾 Admin | Orders</title>
       </Helmet>
+      {loadingDelete && <LoadingBox></LoadingBox>}
 
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="text-primary fw-bold">📦 Order Management</h2>
@@ -133,6 +185,7 @@ export default function OrderListScreen() {
                   <th>Out for Delivery</th>
                   <th>Delivered</th>
                   <th>Action</th>
+                  <th>Delete</th>
                 </tr>
               </thead>
               <tbody>
@@ -269,6 +322,17 @@ export default function OrderListScreen() {
                         onClick={() => navigate(`/order/${order._id}`)}
                       >
                         🔍 View
+                      </Button>
+                    </td>
+
+                    <td>
+                      <Button
+                        size="sm"
+                        variant="outline-dark"
+                        className="rounded-pill px-3"
+                        onClick={() => deleteHandler(order)}
+                      >
+                        🔍 Delete
                       </Button>
                     </td>
                   </tr>
