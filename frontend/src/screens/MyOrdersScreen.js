@@ -8,13 +8,13 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import ListGroup from 'react-bootstrap/ListGroup';
 import Card from 'react-bootstrap/Card';
+import Modal from 'react-bootstrap/Modal';
+import Button from 'react-bootstrap/Button';
 import { toast } from 'react-toastify';
 import LoadingBox from '../components/LoadingBox';
 import MessageBox from '../components/MessageBox';
 import { Store } from '../Store';
 import { getError } from '../utils';
-import Modal from 'react-bootstrap/Modal';
-import Button from 'react-bootstrap/Button';
 import '../orders.css';
 
 function reducer(state, action) {
@@ -38,6 +38,23 @@ function reducer(state, action) {
   }
 }
 
+function calculateReturnTimeLeft(deliveredAt, returnDays) {
+  const returnEndDate = new Date(
+    new Date(deliveredAt).getTime() + returnDays * 24 * 60 * 60 * 1000
+  );
+  const now = new Date();
+  const diff = returnEndDate - now;
+
+  if (diff <= 0) return 'expired';
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+  return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+}
+
 export default function OrderScreen() {
   const { state } = useContext(Store);
   const { userInfo } = state;
@@ -56,7 +73,6 @@ export default function OrderScreen() {
     });
 
   const [{ isPending }, paypalDispatch] = usePayPalScriptReducer();
-
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
   const [showCardModal, setShowCardModal] = useState(false);
   const [cardDetails, setCardDetails] = useState({
@@ -64,6 +80,8 @@ export default function OrderScreen() {
     expiry: '',
     cvv: '',
   });
+
+  const [returnTimers, setReturnTimers] = useState({});
 
   const paymentOptions = [
     { id: 'PhonePe', label: 'PhonePe', icon: '/icons/phonepe.png' },
@@ -90,6 +108,7 @@ export default function OrderScreen() {
     if (!userInfo) {
       return navigate('/login');
     }
+
     if (!order._id || successPay || (order._id && order._id !== orderId)) {
       fetchOrder();
       if (successPay) {
@@ -113,6 +132,93 @@ export default function OrderScreen() {
     }
   }, [order, userInfo, orderId, navigate, paypalDispatch, successPay]);
 
+  useEffect(() => {
+    if (!order.orderItems || !order.isDelivered) return;
+
+    const interval = setInterval(() => {
+      const updatedTimers = {};
+      order.orderItems.forEach((item) => {
+        const policyMatch = item?.product?.returnPolicy?.match(/^(\d+)-day/i);
+        const returnDays = policyMatch ? parseInt(policyMatch[1], 10) : 0;
+
+        if (returnDays && order.updatedAt) {
+          const timeLeft = calculateReturnTimeLeft(order.updatedAt, returnDays);
+          updatedTimers[item._id] = timeLeft;
+        }
+      });
+      setReturnTimers(updatedTimers);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [order]);
+
+  const handleReturn = async (item) => {
+    try {
+      await axios.post(
+        `/api/orders/${orderId}/return`,
+        { itemId: item._id },
+        {
+          headers: { authorization: `Bearer ${userInfo.token}` },
+        }
+      );
+      toast.success('Return request submitted');
+      const { data: updatedOrder } = await axios.get(`/api/orders/${orderId}`, {
+        headers: { authorization: `Bearer ${userInfo.token}` },
+      });
+      dispatch({ type: 'FETCH_SUCCESS', payload: updatedOrder });
+    } catch (err) {
+      toast.error(getError(err));
+    }
+  };
+
+  const createOrder = (data, actions) =>
+    actions.order
+      .create({
+        purchase_units: [{ amount: { value: order.totalPrice } }],
+      })
+      .then((orderID) => orderID);
+
+  const onApprove = (data, actions) =>
+    actions.order.capture().then(async (details) => {
+      try {
+        dispatch({ type: 'PAY_REQUEST' });
+        const { data } = await axios.put(
+          `/api/orders/${order._id}/pay`,
+          details,
+          {
+            headers: { authorization: `Bearer ${userInfo.token}` },
+          }
+        );
+        dispatch({ type: 'PAY_SUCCESS', payload: data });
+        toast.success('Order is paid');
+      } catch (err) {
+        dispatch({ type: 'PAY_FAIL', payload: getError(err) });
+        toast.error(getError(err));
+      }
+    });
+
+  const onError = (err) => toast.error(getError(err));
+
+  const savePaymentMethod = async () => {
+    try {
+      await axios.put(
+        `/api/orders/${orderId}/payment-method`,
+        { paymentMethod: selectedPaymentMethod },
+        {
+          headers: { authorization: `Bearer ${userInfo.token}` },
+        }
+      );
+      toast.success('Payment method updated successfully');
+      const { data: updatedOrder } = await axios.get(`/api/orders/${orderId}`, {
+        headers: { authorization: `Bearer ${userInfo.token}` },
+      });
+      dispatch({ type: 'FETCH_SUCCESS', payload: updatedOrder });
+      setShowCardModal(false);
+    } catch (err) {
+      toast.error(getError(err));
+    }
+  };
+
   const renderOrderProgress = () => {
     const steps = [
       { label: 'Order Placed', completed: true },
@@ -122,17 +228,13 @@ export default function OrderScreen() {
       { label: 'Delivered', completed: order.isDelivered },
     ];
 
-    const isFirstStep = (index) => index === 0;
-
     return (
       <div className="order-progress">
         {steps.map((step, index) => {
           const isCurrent = step.isCurrent;
           const isCompleted = step.completed;
-
-          // 👇 Customize first step icon when not paid and not delivered
           const icon =
-            isFirstStep(index) && !order.isPaid && !order.isDelivered
+            index === 0 && !order.isPaid && !order.isDelivered
               ? '❗'
               : isCompleted
               ? '✓'
@@ -154,62 +256,6 @@ export default function OrderScreen() {
         })}
       </div>
     );
-  };
-
-  function createOrder(data, actions) {
-    return actions.order
-      .create({
-        purchase_units: [
-          {
-            amount: { value: order.totalPrice },
-          },
-        ],
-      })
-      .then((orderID) => orderID);
-  }
-
-  function onApprove(data, actions) {
-    return actions.order.capture().then(async function (details) {
-      try {
-        dispatch({ type: 'PAY_REQUEST' });
-        const { data } = await axios.put(
-          `/api/orders/${order._id}/pay`,
-          details,
-          {
-            headers: { authorization: `Bearer ${userInfo.token}` },
-          }
-        );
-        dispatch({ type: 'PAY_SUCCESS', payload: data });
-        toast.success('Order is paid');
-      } catch (err) {
-        dispatch({ type: 'PAY_FAIL', payload: getError(err) });
-        toast.error(getError(err));
-      }
-    });
-  }
-
-  function onError(err) {
-    toast.error(getError(err));
-  }
-
-  const savePaymentMethod = async () => {
-    try {
-      await axios.put(
-        `/api/orders/${orderId}/payment-method`,
-        { paymentMethod: selectedPaymentMethod },
-        {
-          headers: { authorization: `Bearer ${userInfo.token}` },
-        }
-      );
-      toast.success('Payment method updated successfully');
-      const { data: updatedOrder } = await axios.get(`/api/orders/${orderId}`, {
-        headers: { authorization: `Bearer ${userInfo.token}` },
-      });
-      dispatch({ type: 'FETCH_SUCCESS', payload: updatedOrder });
-      setShowCardModal(false);
-    } catch (err) {
-      toast.error(getError(err));
-    }
   };
 
   return loading ? (
@@ -302,7 +348,7 @@ export default function OrderScreen() {
                 {order.isPaid ? (
                   <MessageBox variant="success">
                     Paid at{' '}
-                    {new Date(order.paidAt).toLocaleString('en-IN', {
+                    {new Date(order.updatedAt).toLocaleString('en-IN', {
                       timeZone: 'Asia/Kolkata',
                       year: 'numeric',
                       month: 'short',
@@ -319,27 +365,76 @@ export default function OrderScreen() {
           )}
 
           {/* Items */}
-          <Card className="mb-3 card-items">
-            <Card.Body>
-              <Card.Title>Items</Card.Title>
-              <ListGroup variant="flush">
-                {order.orderItems.map((item) => (
-                  <ListGroup.Item key={item._id}>
-                    <div className="item-row">
-                      <img src={item.image} alt={item.name} />
-                      <div className="item-details">
-                        <div className="item-name">{item.name}</div>
-                        <div className="item-qty">Qty: {item.quantity}</div>
-                        <div className="item-price">
-                          Price: ₹{item.price.toLocaleString('en-IN')}
+          <div className="bg-white shadow rounded-3 p-4 mb-5">
+            <h2 className="fs-4 fw-semibold mb-4 text-dark">Order Items</h2>
+
+            <div className="d-flex flex-column gap-3">
+              {order.orderItems.map((item) => {
+                const policyMatch =
+                  item.product?.returnPolicy?.match(/^(\d+)-day/i);
+                const returnDays = policyMatch
+                  ? parseInt(policyMatch[1], 10)
+                  : 0;
+                const timeLeft = returnTimers[item._id];
+
+                return (
+                  <div
+                    key={item._id}
+                    className="d-flex align-items-start gap-3 border rounded-3 p-3 hover-shadow transition"
+                    style={{ borderColor: '#dee2e6' }}
+                  >
+                    {/* Image */}
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="rounded border"
+                      style={{
+                        width: '60px',
+                        height: '60px',
+                        objectFit: 'cover',
+                      }}
+                    />
+
+                    {/* Details Grid */}
+                    <div className="flex-grow-1 row small text-secondary">
+                      <div className="col-sm-6 mb-2">
+                        <div className="fw-medium text-dark">{item.name}</div>
+                        <div>
+                          Quantity: <strong>{item.quantity}</strong>
                         </div>
+                        <div>Price: ₹{item.price.toLocaleString('en-IN')}</div>
                       </div>
+
+                      {order.isDelivered &&
+                        item.product?.returnPolicy &&
+                        returnDays > 0 &&
+                        order.updatedAt && (
+                          <div className="col-sm-6 mt-2 mt-sm-0">
+                            {timeLeft && timeLeft !== 'expired' ? (
+                              <>
+                                <button
+                                  className="btn btn-sm btn-danger mb-1"
+                                  onClick={() => handleReturn(item)}
+                                >
+                                  Return Item
+                                </button>
+                                <div className="text-muted small">
+                                  Time left: <strong>{timeLeft}</strong>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="text-muted small">
+                                Return window ({returnDays} days) closed.
+                              </div>
+                            )}
+                          </div>
+                        )}
                     </div>
-                  </ListGroup.Item>
-                ))}
-              </ListGroup>
-            </Card.Body>
-          </Card>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </Col>
 
         {/* Order Summary & Payment Method */}

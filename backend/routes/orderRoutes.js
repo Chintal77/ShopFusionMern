@@ -26,19 +26,39 @@ orderRouter.post(
   '/',
   isAuth,
   expressAsyncHandler(async (req, res) => {
-    const orderItemsWithObjectIds = req.body.orderItems.map((x) => ({
-      ...x,
-      product: new mongoose.Types.ObjectId(x._id), // ✅ Explicit conversion
-    }));
+    const {
+      orderItems,
+      shippingAddress,
+      paymentMethod,
+      itemsPrice,
+      shippingPrice,
+      taxPrice,
+      totalPrice,
+    } = req.body;
+
+    // ✅ Replace slug with actual product ObjectId from DB
+    const orderItemsWithObjectIds = await Promise.all(
+      orderItems.map(async (item) => {
+        const product = await Product.findOne({ slug: item.slug });
+        if (!product) {
+          throw new Error(`Product not found for slug: ${item.slug}`);
+        }
+
+        return {
+          ...item,
+          product: product._id, // ✅ Correct ObjectId reference
+        };
+      })
+    );
 
     const newOrder = new Order({
       orderItems: orderItemsWithObjectIds,
-      shippingAddress: req.body.shippingAddress,
-      paymentMethod: req.body.paymentMethod,
-      itemsPrice: req.body.itemsPrice,
-      shippingPrice: req.body.shippingPrice,
-      taxPrice: req.body.taxPrice,
-      totalPrice: req.body.totalPrice,
+      shippingAddress,
+      paymentMethod,
+      itemsPrice,
+      shippingPrice,
+      taxPrice,
+      totalPrice,
       user: req.user._id,
     });
 
@@ -262,13 +282,15 @@ orderRouter.get(
   '/:id',
   isAuth,
   expressAsyncHandler(async (req, res) => {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id).populate(
+      'orderItems.product',
+      'name returnPolicy'
+    );
 
     if (!order) {
       return res.status(404).send({ message: 'Order Not Found' });
     }
 
-    // ⏱️ Auto-cancel unpaid orders after 1 minutes
     const ONE_MINUTES = 1 * 60 * 1000;
     const isEligibleForAutoCancel =
       !order.isPaid &&
