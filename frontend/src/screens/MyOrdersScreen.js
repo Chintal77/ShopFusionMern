@@ -217,7 +217,7 @@ export default function OrderScreen() {
       const now = new Date().getTime();
       const diffMs = now - returnedTime;
 
-      if (diffMs >= 2 * 60 * 1000) {
+      if (diffMs >= 3 * 60 * 1000) {
         setRefundCredited(true); // Already passed 5 min
       } else {
         const remainingTime = 5 * 60 * 1000 - diffMs;
@@ -443,8 +443,28 @@ export default function OrderScreen() {
               {order.returnStatus === 'Approved' && (
                 <MessageBox variant="info">
                   {refundCredited
-                    ? 'Refunded amount credited in your account.'
-                    : 'Refund is initiated in your original mode of payment.'}
+                    ? `Refunded amount credited in your account on ${new Date(
+                        order.returnedAt
+                      ).toLocaleString('en-IN', {
+                        timeZone: 'Asia/Kolkata',
+                        hour12: true,
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}.`
+                    : `Refund is initiated in your original mode of payment on ${new Date(
+                        order.returnedAt
+                      ).toLocaleString('en-IN', {
+                        timeZone: 'Asia/Kolkata',
+                        hour12: true,
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}.`}
                 </MessageBox>
               )}
             </Card.Body>
