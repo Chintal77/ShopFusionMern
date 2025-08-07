@@ -217,7 +217,7 @@ export default function OrderScreen() {
       const now = new Date().getTime();
       const diffMs = now - returnedTime;
 
-      if (diffMs >= 20 * 60 * 1000) {
+      if (diffMs >= 2 * 60 * 1000) {
         setRefundCredited(true); // Already passed 5 min
       } else {
         const remainingTime = 5 * 60 * 1000 - diffMs;
