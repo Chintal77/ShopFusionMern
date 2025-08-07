@@ -89,7 +89,7 @@ seedRouter.get('/', async (req, res) => {
         cancelledAt: null,
         returnRequested: false,
         returnReason: '',
-        returnStatus: 'Pending',
+        returnStatus: '',
         returnedAt: null,
       };
 
@@ -123,7 +123,7 @@ seedRouter.get('/', async (req, res) => {
           cancelledAt: null,
           returnRequested: false,
           returnReason: '',
-          returnStatus: 'Pending',
+          returnStatus: '',
           returnedAt: null,
         },
       }

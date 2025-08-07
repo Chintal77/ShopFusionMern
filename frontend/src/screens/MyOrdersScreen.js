@@ -67,6 +67,28 @@ export default function OrderScreen() {
 
   const [showStepModal, setShowStepModal] = useState(false);
   const [hoveredStep, setHoveredStep] = useState('');
+  const [gifExists, setGifExists] = useState(false);
+
+  useEffect(() => {
+    if (!hoveredStep) return;
+
+    const gifPath = `/animations/${hoveredStep
+      .toLowerCase()
+      .replace(/\s/g, '_')}.gif`;
+    const img = new Image();
+
+    img.onload = () => {
+      setGifExists(true);
+      setShowStepModal(true);
+    };
+    img.onerror = () => {
+      setGifExists(false);
+      setShowStepModal(false); // Don't show modal if GIF is missing
+    };
+
+    img.src = gifPath;
+  }, [hoveredStep]);
+
   const timeoutRef = useRef(null);
 
   const params = useParams();
@@ -90,13 +112,23 @@ export default function OrderScreen() {
     isDelivered = false,
   } = order;
 
+  const [refundCredited, setRefundCredited] = useState(false);
+
   const steps = [];
 
-  if (isPaid) steps.push({ label: 'Order Placed', icon: '📝' });
-  if (isPacking) steps.push({ label: 'Packing', icon: '📦' });
-  if (isDispatched) steps.push({ label: 'Dispatched', icon: '🚚' });
-  if (outForDelivery) steps.push({ label: 'Out for Delivery', icon: '🛵' });
-  if (isDelivered) steps.push({ label: 'Delivered', icon: '✅' });
+  if (order.returnStatus === 'Approved') {
+    if (refundCredited) {
+      steps.push({ label: 'Refund Credited', icon: '✅' });
+    } else {
+      steps.push({ label: 'Refund Initiated', icon: '💸' });
+    }
+  } else {
+    if (isPaid) steps.push({ label: 'Order Placed', icon: '📝' });
+    if (isPacking) steps.push({ label: 'Packing', icon: '📦' });
+    if (isDispatched) steps.push({ label: 'Dispatched', icon: '🚚' });
+    if (outForDelivery) steps.push({ label: 'Out for Delivery', icon: '🛵' });
+    if (isDelivered) steps.push({ label: 'Delivered', icon: '✅' });
+  }
 
   const [{ isPending }, paypalDispatch] = usePayPalScriptReducer();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
@@ -178,6 +210,24 @@ export default function OrderScreen() {
 
     return () => clearInterval(interval);
   }, [order]);
+
+  useEffect(() => {
+    if (order.returnStatus === 'Approved' && order.returnedAt) {
+      const returnedTime = new Date(order.returnedAt).getTime();
+      const now = new Date().getTime();
+      const diffMs = now - returnedTime;
+
+      if (diffMs >= 20 * 60 * 1000) {
+        setRefundCredited(true); // Already passed 5 min
+      } else {
+        const remainingTime = 5 * 60 * 1000 - diffMs;
+        const timer = setTimeout(() => {
+          setRefundCredited(true);
+        }, remainingTime);
+        return () => clearTimeout(timer); // cleanup
+      }
+    }
+  }, [order.returnStatus, order.returnedAt]);
 
   const handleReturn = async (item) => {
     try {
@@ -369,28 +419,32 @@ export default function OrderScreen() {
           <Card className="mb-3">
             <Card.Body>
               <Card.Title>Payment</Card.Title>
-              <p>Method: {order.paymentMethod}</p>
-              {order.isPaid ? (
-                <MessageBox variant="success">
-                  Paid at{' '}
-                  {new Intl.DateTimeFormat('en-IN', {
-                    timeZone: 'Asia/Kolkata',
-                    year: 'numeric',
-                    month: 'short',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true,
-                  }).format(new Date(order.paidAt))}
-                </MessageBox>
-              ) : (
-                <MessageBox variant="danger">Not Paid</MessageBox>
-              )}
+
+              {order.returnStatus !== 'Approved' &&
+                (order.isPaid ? (
+                  <MessageBox variant="success">
+                    <p>Method: {order.paymentMethod}</p>
+                    Paid at{' '}
+                    {new Intl.DateTimeFormat('en-IN', {
+                      timeZone: 'Asia/Kolkata',
+                      year: 'numeric',
+                      month: 'short',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true,
+                    }).format(new Date(order.paidAt))}
+                  </MessageBox>
+                ) : (
+                  <MessageBox variant="danger">Not Paid</MessageBox>
+                ))}
 
               {/* ✅ Refund message */}
-              {order.refundStatus === 'Initiated' && (
+              {order.returnStatus === 'Approved' && (
                 <MessageBox variant="info">
-                  Refund is initiated in your original mode of payment.
+                  {refundCredited
+                    ? 'Refunded amount credited in your account.'
+                    : 'Refund is initiated in your original mode of payment.'}
                 </MessageBox>
               )}
             </Card.Body>
@@ -636,7 +690,7 @@ export default function OrderScreen() {
       </Row>
       <div>
         <Modal
-          show={showStepModal}
+          show={showStepModal && gifExists}
           onHide={() => setShowStepModal(false)}
           centered
           contentClassName="p-0 fade-modal"
