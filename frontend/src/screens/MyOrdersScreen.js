@@ -106,8 +106,9 @@ export default function OrderScreen() {
     expiry: '',
     cvv: '',
   });
+  const [returnedItemId, setReturnedItemId] = useState(null);
 
-  const [returnTimers, setReturnTimers] = useState({});
+  const [, setReturnTimers] = useState({});
 
   const paymentOptions = [
     { id: 'PhonePe', label: 'PhonePe', icon: '/icons/phonepe.png' },
@@ -180,17 +181,34 @@ export default function OrderScreen() {
 
   const handleReturn = async (item) => {
     try {
-      await axios.post(
+      const reason = prompt(
+        'Enter reason for return:',
+        'Product was defective'
+      );
+      if (!reason) {
+        toast.info('Return cancelled. Reason required.');
+        return;
+      }
+
+      const { data } = await axios.put(
         `/api/orders/${orderId}/return`,
-        { itemId: item._id },
         {
-          headers: { authorization: `Bearer ${userInfo.token}` },
+          itemId: item._id, // ✅ send itemId here
+          returnReason: reason, // ✅ send reason
+        },
+        {
+          headers: { Authorization: `Bearer ${userInfo.token}` },
         }
       );
-      toast.success('Return request submitted');
+
+      toast.success(`Return successful: ${data.message}`);
+      setReturnedItemId(item._id); // ✅ update UI for returned item
+
+      // Re-fetch updated order
       const { data: updatedOrder } = await axios.get(`/api/orders/${orderId}`, {
-        headers: { authorization: `Bearer ${userInfo.token}` },
+        headers: { Authorization: `Bearer ${userInfo.token}` },
       });
+
       dispatch({ type: 'FETCH_SUCCESS', payload: updatedOrder });
     } catch (err) {
       toast.error(getError(err));
@@ -330,11 +348,15 @@ export default function OrderScreen() {
                   Delivered to <strong>{order.shippingAddress.name}</strong>
                   <br />
                   at{' '}
-                  {new Date(order.updatedAt).toLocaleString('en-IN', {
+                  {new Intl.DateTimeFormat('en-IN', {
                     timeZone: 'Asia/Kolkata',
-                    dateStyle: 'medium',
-                    timeStyle: 'short',
-                  })}
+                    year: 'numeric',
+                    month: 'short',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true,
+                  }).format(new Date(order.updatedAt))}
                 </MessageBox>
               ) : (
                 <MessageBox variant="danger" style={{ color: 'red' }}>
@@ -344,101 +366,122 @@ export default function OrderScreen() {
             </Card.Body>
           </Card>
 
-          {/* Payment Status */}
-          {!order.isCancelled && (
-            <Card className="mb-3">
-              <Card.Body>
-                <Card.Title>Payment</Card.Title>
-                {order.isPaid ? (
-                  <MessageBox variant="success">
-                    Paid at{' '}
-                    {new Date(order.updatedAt).toLocaleString('en-IN', {
-                      timeZone: 'Asia/Kolkata',
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </MessageBox>
-                ) : (
-                  <MessageBox variant="danger">Not Paid</MessageBox>
-                )}
-              </Card.Body>
-            </Card>
-          )}
+          <Card className="mb-3">
+            <Card.Body>
+              <Card.Title>Payment</Card.Title>
+              <p>Method: {order.paymentMethod}</p>
+              {order.isPaid ? (
+                <MessageBox variant="success">
+                  Paid at{' '}
+                  {new Intl.DateTimeFormat('en-IN', {
+                    timeZone: 'Asia/Kolkata',
+                    year: 'numeric',
+                    month: 'short',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true,
+                  }).format(new Date(order.paidAt))}
+                </MessageBox>
+              ) : (
+                <MessageBox variant="danger">Not Paid</MessageBox>
+              )}
 
-          {/* Items */}
-          <div className="bg-white shadow rounded-3 p-4 mb-5">
-            <h2 className="fs-4 fw-semibold mb-4 text-dark">Order Items</h2>
+              {/* ✅ Refund message */}
+              {order.refundStatus === 'Initiated' && (
+                <MessageBox variant="info">
+                  Refund is initiated in your original mode of payment.
+                </MessageBox>
+              )}
+            </Card.Body>
+          </Card>
 
-            <div className="d-flex flex-column gap-3">
-              {order.orderItems.map((item) => {
-                const policyMatch =
-                  item.product?.returnPolicy?.match(/^(\d+)-day/i);
-                const returnDays = policyMatch
-                  ? parseInt(policyMatch[1], 10)
-                  : 0;
-                const timeLeft = returnTimers[item._id];
+          <Card className="mb-3">
+            <Card.Body>
+              <Card.Title>Order Items</Card.Title>
+              <ListGroup variant="flush">
+                {order.orderItems.map((item) => {
+                  const product = item.product || {};
+                  const returnPolicy = product.returnPolicy || '0-day';
+                  const match = returnPolicy.match(/^(\d+)-day/);
+                  const returnDays = match ? parseInt(match[1]) : 0;
 
-                return (
-                  <div
-                    key={item._id}
-                    className="d-flex align-items-start gap-3 border rounded-3 p-3 hover-shadow transition"
-                    style={{ borderColor: '#dee2e6' }}
-                  >
-                    {/* Image */}
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="rounded border"
-                      style={{
-                        width: '60px',
-                        height: '60px',
-                        objectFit: 'cover',
-                      }}
-                    />
+                  const deliveredAt = new Date(order.updatedAt);
+                  const now = new Date();
+                  const returnEnd = new Date(
+                    deliveredAt.getTime() + returnDays * 24 * 60 * 60 * 1000
+                  );
+                  const returnExpired = now > returnEnd;
 
-                    {/* Details Grid */}
-                    <div className="flex-grow-1 row small text-secondary">
-                      <div className="col-sm-6 mb-2">
-                        <div className="fw-medium text-dark">{item.name}</div>
-                        <div>
-                          Quantity: <strong>{item.quantity}</strong>
-                        </div>
-                        <div>Price: ₹{item.price.toLocaleString('en-IN')}</div>
-                      </div>
+                  // Calculate time left
+                  let timeLeft = '';
+                  if (!returnExpired) {
+                    const diff = returnEnd - now;
+                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+                    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+                    timeLeft = `${days}d ${hours}h ${minutes}m`;
+                  }
 
-                      {order.isDelivered &&
-                        item.product?.returnPolicy &&
-                        returnDays > 0 &&
-                        order.updatedAt && (
-                          <div className="col-sm-6 mt-2 mt-sm-0">
-                            {timeLeft && timeLeft !== 'expired' ? (
-                              <>
-                                <button
-                                  className="btn btn-sm btn-danger mb-1"
-                                  onClick={() => handleReturn(item)}
-                                >
-                                  Return Item
-                                </button>
-                                <div className="text-muted small">
-                                  Time left: <strong>{timeLeft}</strong>
-                                </div>
-                              </>
-                            ) : (
-                              <div className="text-muted small">
-                                Return window ({returnDays} days) closed.
-                              </div>
-                            )}
+                  return (
+                    <ListGroup.Item key={item._id} className="py-3">
+                      <Row className="align-items-center small">
+                        <Col md={6} className="d-flex align-items-center">
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="img-fluid rounded img-thumbnail me-3"
+                            style={{ maxWidth: '80px' }}
+                          />
+                          <div>
+                            <div className="fw-semibold text-dark">
+                              {item.name}
+                            </div>
+                            <div>
+                              Quantity: <strong>{item.quantity}</strong>
+                            </div>
+                            <div>
+                              Price: ₹{item.price.toLocaleString('en-IN')}
+                            </div>
                           </div>
-                        )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+                        </Col>
+
+                        <Col md={6} className="text-end">
+                          {order.isDelivered && returnDays > 0 && (
+                            <>
+                              {!order.returnRequested ? (
+                                <>
+                                  <button
+                                    className="btn btn-sm btn-outline-danger mb-1"
+                                    onClick={handleReturn}
+                                  >
+                                    Return Item
+                                  </button>
+                                  <div className="text-muted small">
+                                    Time left: <strong>{timeLeft}</strong>
+                                  </div>
+                                </>
+                              ) : (
+                                <span className="text-warning fw-bold">
+                                  Return Status: {order.returnStatus}
+                                </span>
+                              )}
+                            </>
+                          )}
+
+                          {returnDays <= 0 && (
+                            <div className="text-muted small">
+                              Return window ({returnDays} days) closed.
+                            </div>
+                          )}
+                        </Col>
+                      </Row>
+                    </ListGroup.Item>
+                  );
+                })}
+              </ListGroup>
+            </Card.Body>
+          </Card>
         </Col>
 
         {/* Order Summary & Payment Method */}
@@ -591,31 +634,25 @@ export default function OrderScreen() {
             ))}
         </Col>
       </Row>
-      onMouseLeave=
-      {() => {
-        timeoutRef.current = setTimeout(() => {
-          setShowStepModal(false);
-        }, 300);
-      }}
-      onMouseEnter={() => clearTimeout(timeoutRef.current)}
-      className="p-3"
-      <Modal
-        show={showStepModal}
-        onHide={() => setShowStepModal(false)}
-        centered
-        contentClassName="p-0 fade-modal"
-      >
-        <Modal.Body className="text-center p-3">
-          <h5 className="mb-3">{hoveredStep}</h5>
-          <img
-            src={`/animations/${hoveredStep
-              ?.toLowerCase()
-              .replace(/\s/g, '_')}.gif`}
-            alt={hoveredStep}
-            style={{ width: '100%', maxWidth: '300px', height: 'auto' }}
-          />
-        </Modal.Body>
-      </Modal>
+      <div>
+        <Modal
+          show={showStepModal}
+          onHide={() => setShowStepModal(false)}
+          centered
+          contentClassName="p-0 fade-modal"
+        >
+          <Modal.Body className="text-center p-3">
+            <h5 className="mb-3">{hoveredStep}</h5>
+            <img
+              src={`/animations/${hoveredStep
+                ?.toLowerCase()
+                .replace(/\s/g, '_')}.gif`}
+              alt={hoveredStep}
+              style={{ width: '100%', maxWidth: '300px', height: 'auto' }}
+            />
+          </Modal.Body>
+        </Modal>
+      </div>
       {/* Card Modal */}
       <Modal
         show={showCardModal}

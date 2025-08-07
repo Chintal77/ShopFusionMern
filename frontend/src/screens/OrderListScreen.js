@@ -1,9 +1,7 @@
-// Imports (same as before)
 import axios from 'axios';
 import React, { useContext, useEffect, useReducer, useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Pagination from 'react-bootstrap/Pagination';
-
 import { toast } from 'react-toastify';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
@@ -14,7 +12,7 @@ import { getError } from '../utils';
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
 
-// Reducer remains unchanged
+// Reducer
 const reducer = (state, action) => {
   switch (action.type) {
     case 'FETCH_REQUEST':
@@ -26,11 +24,7 @@ const reducer = (state, action) => {
     case 'DELETE_REQUEST':
       return { ...state, loadingDelete: true, successDelete: false };
     case 'DELETE_SUCCESS':
-      return {
-        ...state,
-        loadingDelete: false,
-        successDelete: true,
-      };
+      return { ...state, loadingDelete: false, successDelete: true };
     case 'DELETE_FAIL':
       return { ...state, loadingDelete: false };
     case 'DELETE_RESET':
@@ -87,11 +81,9 @@ export default function OrderListScreen() {
           onClick: async () => {
             try {
               dispatch({ type: 'DELETE_REQUEST' });
-
               await axios.delete(`/api/orders/${order._id}`, {
                 headers: { Authorization: `Bearer ${userInfo.token}` },
               });
-
               toast.success('Order deleted successfully');
               dispatch({ type: 'DELETE_SUCCESS' });
             } catch (err) {
@@ -126,11 +118,16 @@ export default function OrderListScreen() {
     }
   };
 
-  // Pagination Logic
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-  const currentOrders = orders.slice(indexOfFirstOrder, indexOfLastOrder);
-  const totalPages = Math.ceil(orders.length / ordersPerPage);
+  const filteredOrders = orders.filter((order) =>
+    order._id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const currentOrders = filteredOrders.slice(
+    indexOfFirstOrder,
+    indexOfLastOrder
+  );
+  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -143,7 +140,7 @@ export default function OrderListScreen() {
       <Helmet>
         <title>🧾 Admin | Orders</title>
       </Helmet>
-      {loadingDelete && <LoadingBox></LoadingBox>}
+      {loadingDelete && <LoadingBox />}
 
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="text-primary fw-bold">📦 Order Management</h2>
@@ -184,7 +181,9 @@ export default function OrderListScreen() {
                   <th>Dispatched</th>
                   <th>Out for Delivery</th>
                   <th>Delivered</th>
-                  <th>Action</th>
+                  <th>Return Status</th>
+                  <th>Change Return Status</th>
+                  <th>View</th>
                   <th>Delete</th>
                 </tr>
               </thead>
@@ -201,7 +200,6 @@ export default function OrderListScreen() {
                     </td>
                     <td>
                       {order.isCancelled ? (
-                        // If cancelled, show nothing here (blank)
                         <span></span>
                       ) : order.isPaid ? (
                         <span style={{ color: 'green', fontWeight: 'bold' }}>
@@ -213,7 +211,6 @@ export default function OrderListScreen() {
                         </span>
                       )}
                     </td>
-
                     <td>
                       {order.isCancelled ? (
                         <span style={{ color: 'red', fontWeight: 'bold' }}>
@@ -314,6 +311,25 @@ export default function OrderListScreen() {
                       </>
                     )}
 
+                    <td>{order.returnStatus || 'N/A'}</td>
+
+                    <td>
+                      <select
+                        className="form-select form-select-sm"
+                        value={order.returnStatus || 'Pending'}
+                        onChange={(e) =>
+                          updateStatus(
+                            order._id,
+                            'returnStatus',
+                            e.target.value
+                          )
+                        }
+                      >
+                        <option value="Approved">Approved</option>
+                        <option value="Rejected">Rejected</option>
+                      </select>
+                    </td>
+
                     <td>
                       <Button
                         size="sm"
@@ -324,7 +340,6 @@ export default function OrderListScreen() {
                         🔍 View
                       </Button>
                     </td>
-
                     <td>
                       <Button
                         size="sm"
@@ -332,7 +347,7 @@ export default function OrderListScreen() {
                         className="rounded-pill px-3"
                         onClick={() => deleteHandler(order)}
                       >
-                        🔍 Delete
+                        🗑️ Delete
                       </Button>
                     </td>
                   </tr>
@@ -341,7 +356,6 @@ export default function OrderListScreen() {
             </table>
           </div>
 
-          {/* Pagination Component */}
           <div className="d-flex justify-content-center mt-4">
             <Pagination>
               <Pagination.First

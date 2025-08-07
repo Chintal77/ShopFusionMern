@@ -53,6 +53,14 @@ const orderSchema = new mongoose.Schema(
     isCancelled: { type: Boolean, default: false },
     cancelledBy: { type: String, enum: ['admin', 'system'], default: null },
     cancelledAt: { type: Date, default: null },
+    returnRequested: { type: Boolean, default: false },
+    returnReason: { type: String, default: '' },
+    returnStatus: {
+      type: String,
+      enum: ['Pending', 'Approved', 'Rejected', 'Processed'],
+      default: 'Pending',
+    },
+    returnedAt: { type: Date },
   },
   {
     timestamps: true,

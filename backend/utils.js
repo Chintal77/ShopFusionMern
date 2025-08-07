@@ -60,6 +60,40 @@ export const updateOrderStatus = async (req, res) => {
   }
 };
 
+export const updateReturnStatus = async (req, res) => {
+  const { id: orderId } = req.params;
+  const { field, value } = req.body;
+
+  try {
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Only allow specific fields to be updated
+    const validFields = [
+      'isPacking',
+      'isDispatched',
+      'outForDelivery',
+      'isDelivered',
+      'returnStatus',
+    ];
+
+    if (!validFields.includes(field)) {
+      return res.status(400).json({ message: 'Invalid field update request' });
+    }
+
+    order[field] = value;
+    await order.save();
+
+    res.status(200).json({ message: `${field} updated successfully`, order });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error updating status' });
+  }
+};
+
 export const cancelOrder = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);

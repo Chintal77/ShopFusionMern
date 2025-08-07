@@ -87,6 +87,10 @@ seedRouter.get('/', async (req, res) => {
         isCancelled: false,
         cancelledBy: null,
         cancelledAt: null,
+        returnRequested: false,
+        returnReason: '',
+        returnStatus: 'Pending',
+        returnedAt: null,
       };
 
       createdOrders = await Order.insertMany([sampleOrder]);
@@ -103,6 +107,10 @@ seedRouter.get('/', async (req, res) => {
           { isCancelled: { $exists: false } },
           { cancelledBy: { $exists: false } },
           { cancelledAt: { $exists: false } },
+          { returnRequested: { $exists: false } },
+          { returnReason: { $exists: false } },
+          { returnStatus: { $exists: false } },
+          { returnedAt: { $exists: false } },
         ],
       },
       {
@@ -113,6 +121,10 @@ seedRouter.get('/', async (req, res) => {
           isCancelled: false,
           cancelledBy: null,
           cancelledAt: null,
+          returnRequested: false,
+          returnReason: '',
+          returnStatus: 'Pending',
+          returnedAt: null,
         },
       }
     );

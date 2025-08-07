@@ -3,7 +3,13 @@ import expressAsyncHandler from 'express-async-handler';
 import Order from '../models/orderModel.js';
 import User from '../models/userModel.js';
 import Product from '../models/productModel.js';
-import { isAuth, isAdmin, updateOrderStatus, cancelOrder } from '../utils.js';
+import {
+  isAuth,
+  isAdmin,
+  updateOrderStatus,
+  cancelOrder,
+  updateReturnStatus,
+} from '../utils.js';
 import mongoose from 'mongoose';
 
 import { startOfDay, endOfDay } from 'date-fns';
@@ -369,5 +375,40 @@ orderRouter.delete(
     }
   })
 );
+
+orderRouter.put(
+  '/:id/return',
+  isAuth,
+  expressAsyncHandler(async (req, res) => {
+    const { returnReason } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).send({ message: 'Order not found' });
+    }
+
+    if (!order.isDelivered) {
+      return res.status(400).send({ message: 'Order not yet delivered' });
+    }
+
+    if (order.returnRequested) {
+      return res.status(400).send({ message: 'Return already requested' });
+    }
+
+    if (order.isCancelled) {
+      return res.status(400).send({ message: 'Order is cancelled' });
+    }
+
+    order.returnRequested = true;
+    order.returnReason = returnReason || 'Not specified';
+    order.returnStatus = 'Pending';
+    order.returnedAt = new Date();
+
+    const updatedOrder = await order.save();
+    res.send({ message: 'Return request submitted', order: updatedOrder });
+  })
+);
+
+orderRouter.put('/:id/status', isAuth, isAdmin, updateReturnStatus);
 
 export default orderRouter;
