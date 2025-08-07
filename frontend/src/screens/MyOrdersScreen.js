@@ -1,5 +1,11 @@
 import axios from 'axios';
-import React, { useContext, useEffect, useReducer, useState } from 'react';
+import React, {
+  useContext,
+  useEffect,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 import { PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -59,6 +65,10 @@ export default function OrderScreen() {
   const { state } = useContext(Store);
   const { userInfo } = state;
 
+  const [showStepModal, setShowStepModal] = useState(false);
+  const [hoveredStep, setHoveredStep] = useState('');
+  const timeoutRef = useRef(null);
+
   const params = useParams();
   const { id: orderId } = params;
   const navigate = useNavigate();
@@ -71,6 +81,22 @@ export default function OrderScreen() {
       successPay: false,
       loadingPay: false,
     });
+
+  const {
+    isPaid = false,
+    isPacking = false,
+    isDispatched = false,
+    outForDelivery = false,
+    isDelivered = false,
+  } = order;
+
+  const steps = [];
+
+  if (isPaid) steps.push({ label: 'Order Placed', icon: '📝' });
+  if (isPacking) steps.push({ label: 'Packing', icon: '📦' });
+  if (isDispatched) steps.push({ label: 'Dispatched', icon: '🚚' });
+  if (outForDelivery) steps.push({ label: 'Out for Delivery', icon: '🛵' });
+  if (isDelivered) steps.push({ label: 'Delivered', icon: '✅' });
 
   const [{ isPending }, paypalDispatch] = usePayPalScriptReducer();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
@@ -219,44 +245,24 @@ export default function OrderScreen() {
     }
   };
 
-  const renderOrderProgress = () => {
-    const steps = [
-      { label: 'Order Placed', completed: true },
-      { label: 'Packing', completed: order.isPacking },
-      { label: 'Dispatched', completed: order.isDispatched },
-      { label: 'Out for Delivery', completed: order.outForDelivery },
-      { label: 'Delivered', completed: order.isDelivered },
-    ];
-
-    return (
-      <div className="order-progress">
-        {steps.map((step, index) => {
-          const isCurrent = step.isCurrent;
-          const isCompleted = step.completed;
-          const icon =
-            index === 0 && !order.isPaid && !order.isDelivered
-              ? '❗'
-              : isCompleted
-              ? '✓'
-              : isCurrent
-              ? '🕒'
-              : index + 1;
-
-          return (
-            <div
-              key={index}
-              className={`step ${isCompleted ? 'completed' : ''} ${
-                isCurrent ? 'current' : ''
-              }`}
-            >
-              <div className="circle">{icon}</div>
-              <div className="label">{step.label}</div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
+  const renderOrderProgress = () => (
+    <div className="order-progress d-flex justify-content-between flex-wrap">
+      {steps.map((step, index) => (
+        <div
+          key={index}
+          className="step text-center m-2"
+          onMouseEnter={() => {
+            clearTimeout(timeoutRef.current);
+            setHoveredStep(step.label);
+            setShowStepModal(true);
+          }}
+        >
+          <div className="icon fs-3">{step.icon}</div>
+          <div className="label fw-bold">{step.label}</div>
+        </div>
+      ))}
+    </div>
+  );
 
   return loading ? (
     <LoadingBox />
@@ -268,7 +274,6 @@ export default function OrderScreen() {
         <title>Order {orderId}</title>
       </Helmet>
       <h1 className="my-3">Order {orderId}</h1>
-
       {order.isCancelled && (
         <Card className="mb-4 border-danger border-2 shadow-lg bg-light bg-gradient">
           <Card.Body>
@@ -307,7 +312,6 @@ export default function OrderScreen() {
           </Card.Body>
         </Card>
       )}
-
       {renderOrderProgress()}
       <Row>
         <Col md={8}>
@@ -587,7 +591,31 @@ export default function OrderScreen() {
             ))}
         </Col>
       </Row>
-
+      onMouseLeave=
+      {() => {
+        timeoutRef.current = setTimeout(() => {
+          setShowStepModal(false);
+        }, 300);
+      }}
+      onMouseEnter={() => clearTimeout(timeoutRef.current)}
+      className="p-3"
+      <Modal
+        show={showStepModal}
+        onHide={() => setShowStepModal(false)}
+        centered
+        contentClassName="p-0 fade-modal"
+      >
+        <Modal.Body className="text-center p-3">
+          <h5 className="mb-3">{hoveredStep}</h5>
+          <img
+            src={`/animations/${hoveredStep
+              ?.toLowerCase()
+              .replace(/\s/g, '_')}.gif`}
+            alt={hoveredStep}
+            style={{ width: '100%', maxWidth: '300px', height: 'auto' }}
+          />
+        </Modal.Body>
+      </Modal>
       {/* Card Modal */}
       <Modal
         show={showCardModal}
