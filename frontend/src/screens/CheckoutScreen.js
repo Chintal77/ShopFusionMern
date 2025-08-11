@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import '../checkout.css';
 
 function CheckoutScreen({ cartItems, setCartItems }) {
@@ -39,7 +40,6 @@ function CheckoutScreen({ cartItems, setCartItems }) {
     fetchProducts();
   }, []);
 
-  // Adjusted: Filter products based on array of cartItems
   useEffect(() => {
     if (!Array.isArray(cartItems) || cartItems.length === 0) {
       setProductsInCart([]);
@@ -52,7 +52,6 @@ function CheckoutScreen({ cartItems, setCartItems }) {
     setProductsInCart(filtered);
   }, [products, cartItems]);
 
-  // Auto-clear delivery info on entering /checkout
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem('deliveryInfo') || '{}');
     if (saved.phone) {
@@ -75,7 +74,6 @@ function CheckoutScreen({ cartItems, setCartItems }) {
     setIsDeliverySaved(false);
   }, []);
 
-  // Calculate total amount using array cartItems
   const totalAmount = productsInCart.reduce((acc, product) => {
     const cartItem = cartItems.find((item) => item.slug === product.slug);
     const quantity = cartItem ? cartItem.quantity : 0;
@@ -158,7 +156,6 @@ function CheckoutScreen({ cartItems, setCartItems }) {
         const discount = discountMatch ? parseInt(discountMatch[1]) : 0;
         const finalPrice =
           product.price - Math.round((product.price * discount) / 100);
-
         return {
           slug: product.slug,
           name: product.name,
@@ -204,175 +201,216 @@ function CheckoutScreen({ cartItems, setCartItems }) {
   }
 
   return (
-    <div className="checkout-container">
-      <h2 className="checkout-title">🧾 Checkout Summary</h2>
+    <div className="container my-4">
+      <h2 className="mb-4">🧾 Checkout Summary</h2>
+
       {totalAmount >= 1000 && (
-        <div className="free-shipping-banner">
+        <div className="alert alert-success">
           🎁 You’re eligible for <strong>Free Shipping</strong>! (Orders ₹1000+)
         </div>
       )}
 
       {loading ? (
-        <p className="loading-message">Loading your cart...</p>
+        <div className="text-center py-5">
+          <div className="spinner-border text-primary" role="status"></div>
+          <p className="mt-3">Loading your cart...</p>
+        </div>
       ) : (
-        <div className="checkout-grid">
-          <div className="cart-items">
-            <h3 className="section-title">🛒 Items in Your Cart</h3>
-            {productsInCart.length === 0 ? (
-              <p className="empty-cart">Your cart is empty.</p>
-            ) : (
-              productsInCart.map((product) => {
-                const cartItem = cartItems.find(
-                  (item) => item.slug === product.slug
-                );
-                const quantity = cartItem ? cartItem.quantity : 0;
-                const discountMatch = product.badge?.match(/(\d+)%/);
-                const discount = discountMatch ? parseInt(discountMatch[1]) : 0;
-                const finalPrice =
-                  product.price - Math.round((product.price * discount) / 100);
-                const subtotal = finalPrice * quantity;
+        <div className="row">
+          <div className="col-md-7">
+            <div className="card mb-4">
+              <div className="card-header bg-light">🛒 Items in Your Cart</div>
+              <ul className="list-group list-group-flush">
+                {productsInCart.length === 0 ? (
+                  <li className="list-group-item text-muted">
+                    Your cart is empty.
+                  </li>
+                ) : (
+                  productsInCart.map((product) => {
+                    const cartItem = cartItems.find(
+                      (item) => item.slug === product.slug
+                    );
+                    const quantity = cartItem ? cartItem.quantity : 0;
+                    const discountMatch = product.badge?.match(/(\d+)%/);
+                    const discount = discountMatch
+                      ? parseInt(discountMatch[1])
+                      : 0;
+                    const finalPrice =
+                      product.price -
+                      Math.round((product.price * discount) / 100);
+                    const subtotal = finalPrice * quantity;
 
-                return (
-                  <div key={product.slug} className="cart-item">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="product-image"
-                    />
-                    <div>
-                      <h4 className="product-name">{product.name}</h4>
-                      <p className="product-id">ID: {product._id}</p>
-                      <p>
-                        Qty: <strong>{quantity}</strong>
-                      </p>
-                      <p>Price: ₹{finalPrice.toLocaleString('en-IN')} each</p>
-                      <p className="subtotal">
-                        Subtotal: ₹{subtotal.toLocaleString('en-IN')}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })
-            )}
+                    return (
+                      <li
+                        key={product.slug}
+                        className="list-group-item d-flex align-items-center"
+                      >
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="img-thumbnail me-3"
+                          style={{ width: '80px', height: '80px' }}
+                        />
+                        <div>
+                          <h6 className="mb-1">{product.name}</h6>
+                          <small className="text-muted">
+                            ID: {product._id}
+                          </small>
+                          <div>
+                            Qty: <strong>{quantity}</strong>
+                          </div>
+                          <div>
+                            Price: ₹{finalPrice.toLocaleString('en-IN')} each
+                          </div>
+                          <div className="fw-bold">
+                            Subtotal: ₹{subtotal.toLocaleString('en-IN')}
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })
+                )}
+              </ul>
+            </div>
           </div>
 
-          <div className="summary-box">
-            <h3 className="section-title">📦 Delivery Info</h3>
-            <div className="delivery-info-form">
-              <div className="form-group">
-                <label>Name:</label>
-                <input type="text" value={userInfo.name} disabled />
+          <div className="col-md-5">
+            <div className="card mb-4">
+              <div className="card-header bg-light">📦 Delivery Info</div>
+              <div className="card-body">
+                <div className="mb-3">
+                  <label className="form-label">Name</label>
+                  <input
+                    type="text"
+                    value={userInfo.name}
+                    disabled
+                    className="form-control"
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Email</label>
+                  <input
+                    type="email"
+                    value={userInfo.email}
+                    disabled
+                    className="form-control"
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Phone</label>
+                  <input
+                    type="text"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="form-control"
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Address</label>
+                  <input
+                    type="text"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    className="form-control"
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Landmark</label>
+                  <input
+                    type="text"
+                    value={landmark}
+                    onChange={(e) => setLandmark(e.target.value)}
+                    className="form-control"
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">City</label>
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="form-control"
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">State</label>
+                  <input
+                    type="text"
+                    value={stateName}
+                    onChange={(e) => setStateName(e.target.value)}
+                    className="form-control"
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">PIN Code</label>
+                  <input
+                    type="text"
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value)}
+                    className="form-control"
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Country</label>
+                  <input
+                    type="text"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    className="form-control"
+                  />
+                </div>
+                <button
+                  onClick={handleSaveDeliveryInfo}
+                  className="btn btn-outline-primary w-100"
+                >
+                  💾 Save Delivery Info
+                </button>
               </div>
-              <div className="form-group">
-                <label>Email:</label>
-                <input type="email" value={userInfo.email} disabled />
-              </div>
-              <div className="form-group">
-                <label>Phone:</label>
-                <input
-                  type="text"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label>Address:</label>
-                <input
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label>Landmark:</label>
-                <input
-                  type="text"
-                  value={landmark}
-                  onChange={(e) => setLandmark(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label>City:</label>
-                <input
-                  type="text"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label>State:</label>
-                <input
-                  type="text"
-                  value={stateName}
-                  onChange={(e) => setStateName(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label>PIN Code:</label>
-                <input
-                  type="text"
-                  value={pin}
-                  onChange={(e) => setPin(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label>Country:</label>
-                <input
-                  type="text"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                />
-              </div>
-              <button
-                className="save-delivery-btn"
-                onClick={handleSaveDeliveryInfo}
-              >
-                💾 Save Delivery Info
-              </button>
             </div>
 
-            <h3 className="section-title">💳 Payment Summary</h3>
-            <div className="price-row">
-              Subtotal: ₹{totalAmount.toLocaleString('en-IN')}
-            </div>
-            <div className="price-row">
-              Tax (18% GST): ₹{taxAmount.toLocaleString('en-IN')}
-            </div>
-            <div
-              className={`price-row ${
-                shippingCharge === 0 ? 'free-shipping' : 'shipping-charged'
-              }`}
-            >
-              Shipping Charges: ₹{shippingCharge.toLocaleString('en-IN')}
-            </div>
-            <div className="shipping-note">{shippingMessage}</div>
-            <hr />
-            <div className="price-row bold">
-              Grand Total: ₹{grandTotal.toLocaleString('en-IN')}
-            </div>
-            <div className="delivery-date">
-              📦 Estimated Delivery: <strong>{deliveryDateStr}</strong>
-            </div>
+            <div className="card">
+              <div className="card-header bg-light">💳 Payment Summary</div>
+              <div className="card-body">
+                <p>Subtotal: ₹{totalAmount.toLocaleString('en-IN')}</p>
+                <p>Tax (18% GST): ₹{taxAmount.toLocaleString('en-IN')}</p>
+                <p
+                  className={
+                    shippingCharge === 0 ? 'text-success' : 'text-danger'
+                  }
+                >
+                  Shipping Charges: ₹{shippingCharge.toLocaleString('en-IN')}
+                </p>
+                <small className="text-muted">{shippingMessage}</small>
+                <hr />
+                <h5>Grand Total: ₹{grandTotal.toLocaleString('en-IN')}</h5>
+                <p>
+                  📦 Estimated Delivery: <strong>{deliveryDateStr}</strong>
+                </p>
 
-            {isDeliverySaved && (
-              <div className="saved-delivery-summary">
-                <h4>📍 Shipping Address:</h4>
-                <p>
-                  {userInfo.name}, {phone}
-                </p>
-                <p>
-                  {address}, {landmark}
-                </p>
-                <p>
-                  {city}, {stateName} - {pin}
-                </p>
-                <p>{country}</p>
+                {isDeliverySaved && (
+                  <div className="alert alert-info mt-3">
+                    <h6>📍 Shipping Address:</h6>
+                    <p>
+                      {userInfo.name}, {phone}
+                    </p>
+                    <p>
+                      {address}, {landmark}
+                    </p>
+                    <p>
+                      {city}, {stateName} - {pin}
+                    </p>
+                    <p>{country}</p>
+                  </div>
+                )}
+
+                <button
+                  onClick={handlePlaceOrder}
+                  className="btn btn-success w-100"
+                >
+                  💸 Proceed to Payment
+                </button>
               </div>
-            )}
-
-            <button className="place-order-btn" onClick={handlePlaceOrder}>
-              💸 Proceed to Payment
-            </button>
+            </div>
           </div>
         </div>
       )}

@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import Order from '../backend/models/orderModel.js';
+import mg from 'mailgun-js';
 
 export const generateToken = (user) => {
   return jwt.sign(
@@ -39,6 +40,104 @@ export const isAdmin = (req, res, next) => {
   } else {
     res.status(401).send({ message: 'Invalid Admin Token' });
   }
+};
+
+export const mailgun = () =>
+  mg({
+    apiKey: process.env.MAILGUN_API_KEY,
+    domain: process.env.MAILGUN_DOMAIN,
+  });
+
+export const payOrderEmailTemplate = (order) => {
+  return `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+    <div style="background-color: #4CAF50; padding: 20px; color: white; text-align: center;">
+      <h1 style="margin: 0;">Thank You for Your Order!</h1>
+    </div>
+
+    <div style="padding: 20px;">
+      <p style="font-size: 16px;">Hi <strong>${order.user.name}</strong>,</p>
+      <p style="font-size: 14px; color: #555;">We’ve finished processing your order. Below are your order details:</p>
+
+      <h2 style="color: #4CAF50; font-size: 18px;">
+        Order #${
+          order._id
+        } <span style="font-weight: normal; font-size: 14px;">(${order.createdAt
+    .toString()
+    .substring(0, 10)})</span>
+      </h2>
+
+      <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+        <thead>
+          <tr style="background-color: #f8f8f8;">
+            <th align="left" style="padding: 8px; border: 1px solid #ddd;">Product</th>
+            <th align="center" style="padding: 8px; border: 1px solid #ddd;">Quantity</th>
+            <th align="right" style="padding: 8px; border: 1px solid #ddd;">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${order.orderItems
+            .map(
+              (item) => `
+            <tr>
+              <td style="padding: 8px; border: 1px solid #ddd;">${
+                item.name
+              }</td>
+              <td align="center" style="padding: 8px; border: 1px solid #ddd;">${
+                item.quantity
+              }</td>
+              <td align="right" style="padding: 8px; border: 1px solid #ddd;">₹${item.price.toFixed(
+                2
+              )}</td>
+            </tr>
+          `
+            )
+            .join('')}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" style="padding: 8px; border: 1px solid #ddd;">Items Price:</td>
+            <td align="right" style="padding: 8px; border: 1px solid #ddd;">₹${order.itemsPrice.toFixed(
+              2
+            )}</td>
+          </tr>
+          <tr>
+            <td colspan="2" style="padding: 8px; border: 1px solid #ddd;">Shipping Price:</td>
+            <td align="right" style="padding: 8px; border: 1px solid #ddd;">₹${order.shippingPrice.toFixed(
+              2
+            )}</td>
+          </tr>
+          <tr>
+            <td colspan="2" style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Total Price:</td>
+            <td align="right" style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">₹${order.totalPrice.toFixed(
+              2
+            )}</td>
+          </tr>
+          <tr>
+            <td colspan="2" style="padding: 8px; border: 1px solid #ddd;">Payment Method:</td>
+            <td align="right" style="padding: 8px; border: 1px solid #ddd;">${
+              order.paymentMethod
+            }</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <h2 style="margin-top: 20px; color: #4CAF50;">Shipping Address</h2>
+      <p style="font-size: 14px; line-height: 1.5; color: #555;">
+        ${order.shippingAddress.name},<br/>
+        ${order.shippingAddress.address},<br/>
+        ${order.shippingAddress.city},<br/>
+        ${order.shippingAddress.country},<br/>
+        ${order.shippingAddress.pin}
+      </p>
+
+      <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;"/>
+      <p style="font-size: 14px; text-align: center; color: #777;">
+        Thank you for shopping with us. We hope to see you again soon!
+      </p>
+    </div>
+  </div>
+  `;
 };
 
 export const updateOrderStatus = async (req, res) => {

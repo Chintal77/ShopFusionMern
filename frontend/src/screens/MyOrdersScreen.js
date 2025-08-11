@@ -332,6 +332,44 @@ export default function OrderScreen() {
     </div>
   );
 
+  const updatedAtIST = order?.updatedAt
+    ? new Intl.DateTimeFormat('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      }).format(new Date(order.updatedAt))
+    : 'Date not available';
+
+  const returnedAtISTPlus3 = order?.returnedAt
+    ? new Date(
+        new Date(order.returnedAt).getTime() + 3 * 60 * 1000
+      ).toLocaleString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        hour12: true,
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : 'Date not available';
+
+  const returnedAtIST = order?.returnedAt
+    ? new Date(new Date(order.returnedAt).getTime()).toLocaleString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        hour12: true,
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : 'Date not available';
+
   return loading ? (
     <LoadingBox />
   ) : error ? (
@@ -393,20 +431,12 @@ export default function OrderScreen() {
                 {order.shippingAddress.city}, {order.shippingAddress.pin},{' '}
                 {order.shippingAddress.country}
               </Card.Text>
+
               {order.isCancelled ? null : order.isDelivered ? (
                 <MessageBox variant="success">
                   Delivered to <strong>{order.shippingAddress.name}</strong>
                   <br />
-                  at{' '}
-                  {new Intl.DateTimeFormat('en-IN', {
-                    timeZone: 'Asia/Kolkata',
-                    year: 'numeric',
-                    month: 'short',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true,
-                  }).format(new Date(order.updatedAt))}
+                  at {updatedAtIST}
                 </MessageBox>
               ) : (
                 <MessageBox variant="danger" style={{ color: 'red' }}>
@@ -443,28 +473,8 @@ export default function OrderScreen() {
               {order.returnStatus === 'Approved' && (
                 <MessageBox variant="info">
                   {refundCredited
-                    ? `Refunded amount credited in your account on ${new Date(
-                        order.returnedAt
-                      ).toLocaleString('en-IN', {
-                        timeZone: 'Asia/Kolkata',
-                        hour12: true,
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}.`
-                    : `Refund is initiated in your original mode of payment on ${new Date(
-                        order.returnedAt
-                      ).toLocaleString('en-IN', {
-                        timeZone: 'Asia/Kolkata',
-                        hour12: true,
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}.`}
+                    ? `Refunded amount credited in your account on ${returnedAtISTPlus3}.`
+                    : `Refund is initiated in your original mode of payment on ${returnedAtIST}.`}
                 </MessageBox>
               )}
             </Card.Body>
