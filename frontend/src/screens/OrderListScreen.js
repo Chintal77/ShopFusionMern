@@ -105,7 +105,7 @@ export default function OrderListScreen() {
   const updateStatus = async (orderId, field, value) => {
     try {
       await axios.put(
-        `/api/orders/${orderId}/status`,
+        `/api/orders/${orderId}/statusmessage`,
         { field, value },
         { headers: { Authorization: `Bearer ${userInfo.token}` } }
       );

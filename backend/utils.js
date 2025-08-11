@@ -140,6 +140,116 @@ export const payOrderEmailTemplate = (order) => {
   `;
 };
 
+export const orderStatusEmailTemplate = (order, statusmessage) => `
+<!DOCTYPE html>
+<html lang="en" style="margin:0; padding:0;">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Order Status Update</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: auto;
+      background-color: #ffffff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .header {
+      background: linear-gradient(135deg, #28a745, #20c997);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .content {
+      padding: 20px;
+    }
+    .status-badge {
+      display: inline-block;
+      background-color: #28a745;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+    .order-items {
+      margin-top: 20px;
+      border-collapse: collapse;
+      width: 100%;
+    }
+    .order-items th, .order-items td {
+      padding: 10px;
+      border: 1px solid #dee2e6;
+      text-align: left;
+    }
+    .footer {
+      background-color: #f1f3f5;
+      text-align: center;
+      padding: 15px;
+      font-size: 12px;
+      color: #6c757d;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="header">
+      <h1>Your Order Status Has Been Updated</h1>
+    </div>
+    <div class="content">
+      <p>Hi <strong>${order.user.name}</strong>,</p>
+      <p>${statusmessage}</p>
+
+      <div class="status-badge">${statusmessage}</div>
+
+      <h3>Order Summary</h3>
+      <table class="order-items">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${order.orderItems
+            .map(
+              (item) => `
+              <tr>
+                <td>${item.name}</td>
+                <td>${item.quantity}</td>
+                <td>₹${item.price}</td>
+              </tr>
+            `
+            )
+            .join('')}
+        </tbody>
+      </table>
+
+      <h3 style="margin-top:20px;">Total: ₹${order.totalPrice}</h3>
+
+      <p>Thank you for shopping with us! We’ll keep you updated as your order progresses.</p>
+    </div>
+    <div class="footer">
+      &copy; ${new Date().getFullYear()} ShopFusion. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>
+`;
+
 export const updateOrderStatus = async (req, res) => {
   const { id } = req.params;
   const { field, value } = req.body;

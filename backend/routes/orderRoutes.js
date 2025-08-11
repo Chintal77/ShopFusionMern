@@ -11,6 +11,7 @@ import {
   updateReturnStatus,
   mailgun,
   payOrderEmailTemplate,
+  orderStatusEmailTemplate,
 } from '../utils.js';
 import mongoose from 'mongoose';
 
@@ -432,5 +433,70 @@ orderRouter.put(
 );
 
 orderRouter.put('/:id/status', isAuth, isAdmin, updateReturnStatus);
+
+const sendOrderEmail = async (order, subject, html) => {
+  const mg = mailgun({
+    apiKey: process.env.MAILGUN_API_KEY,
+    domain: process.env.MAILGUN_DOMAIN,
+  });
+
+  await mg.messages().send({
+    from: 'ShopFusion <admin@shopfusion.com>',
+    to: `${order.user.name} <${order.user.email}>`,
+    subject,
+    html,
+  });
+};
+
+orderRouter.put(
+  '/:id/statusmessage',
+  isAuth,
+  isAdmin,
+  expressAsyncHandler(async (req, res) => {
+    const { field, value } = req.body;
+    const order = await Order.findById(req.params.id).populate(
+      'user',
+      'name email'
+    );
+
+    if (!order) {
+      return res.status(404).send({ message: 'Order not found' });
+    }
+
+    // ✅ Update the order field dynamically
+    order[field] = value;
+    await order.save();
+
+    // ✅ Determine the status message based on field & value
+    let statusmessage = '';
+    if (value) {
+      switch (field) {
+        case 'isPacking':
+          statusmessage = 'Your order is now being packed!';
+          break;
+        case 'isDispatched':
+          statusmessage = 'Your order has been dispatched!';
+          break;
+        case 'outForDelivery':
+          statusmessage = 'Your order is out for delivery!';
+          break;
+        case 'isDelivered':
+          statusmessage = 'Your order has been delivered!';
+          break;
+        default:
+          statusmessage = 'Your order status has been updated.';
+      }
+
+      // ✅ Send the HTML email only if the status is being set to true
+      await sendOrderEmail(
+        order,
+        'Order Status Update',
+        orderStatusEmailTemplate(order, statusmessage)
+      );
+    }
+
+    res.send({ message: 'Order status updated successfully', order });
+  })
+);
 
 export default orderRouter;
