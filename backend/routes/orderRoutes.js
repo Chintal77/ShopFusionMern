@@ -519,46 +519,46 @@ orderRouter.put(
         'Order Status Update',
         orderStatusEmailTemplate(order, statusmessage)
       );
-
-      orderRouter.put(
-        '/:id/refund-credited',
-        isAuth,
-        expressAsyncHandler(async (req, res) => {
-          const order = await Order.findById(req.params.id).populate(
-            'user',
-            'name email'
-          );
-
-          if (!order) {
-            return res.status(404).send({ message: 'Order not found' });
-          }
-
-          // Mark refund credited
-          order.refundCredited = true;
-          await order.save();
-
-          try {
-            await sendOrderEmail(
-              order,
-              'Refund Credited',
-              refundCreditedEmailTemplate(order)
-            );
-            res.send({
-              message: 'Refund credited email sent successfully',
-              order,
-            });
-          } catch (error) {
-            console.error('Email send error:', error);
-            res.status(500).send({
-              message: 'Refund credited, but email failed to send',
-              error,
-            });
-          }
-        })
-      );
     }
 
     res.send({ message: 'Order status updated successfully', order });
+  })
+);
+
+orderRouter.put(
+  '/:id/refund-credited',
+  isAuth,
+  expressAsyncHandler(async (req, res) => {
+    const order = await Order.findById(req.params.id).populate(
+      'user',
+      'name email'
+    );
+
+    if (!order) {
+      return res.status(404).send({ message: 'Order not found' });
+    }
+
+    // Mark refund credited
+    order.refundCredited = true;
+    await order.save();
+
+    try {
+      await sendOrderEmail(
+        order,
+        'Refund Credited',
+        refundCreditedEmailTemplate(order)
+      );
+      res.send({
+        message: 'Refund credited email sent successfully',
+        order,
+      });
+    } catch (error) {
+      console.error('Email send error:', error);
+      res.status(500).send({
+        message: 'Refund credited, but email failed to send',
+        error,
+      });
+    }
   })
 );
 

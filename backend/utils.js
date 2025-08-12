@@ -271,7 +271,7 @@ export const returnRequestEmailTemplate = (order, user) => {
           ${order.orderItems
             .map(
               (item) => `
-              <li>${item.name} - ${item.qty} x ₹${item.price}</li>
+              <li>${item.name} - ${item.quantity} x ₹${item.price}</li>
             `
             )
             .join('')}
@@ -304,7 +304,7 @@ export const returnApprovedEmailTemplate = (order) => {
           ${order.orderItems
             .map(
               (item) => `
-              <li>${item.name} - ${item.qty} x ₹${item.price}</li>
+              <li>${item.name} - ${item.quantity} x ₹${item.price}</li>
             `
             )
             .join('')}
