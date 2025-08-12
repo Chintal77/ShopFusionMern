@@ -489,15 +489,13 @@ orderRouter.put(
       return res.status(404).send({ message: 'Order not found' });
     }
 
-    // ✅ Update order dynamically
+    // ✅ Update the order field dynamically
     order[field] = value;
     await order.save();
 
-    // ✅ Default status message
-    let statusmessage = 'Your order status has been updated.';
-
-    // 🔹 Normal order status flow
-    if (value && field !== 'returnStatus') {
+    // ✅ Determine the status message based on field & value
+    let statusmessage = '';
+    if (value) {
       switch (field) {
         case 'isPacking':
           statusmessage = 'Your order is now being packed!';
@@ -511,20 +509,52 @@ orderRouter.put(
         case 'isDelivered':
           statusmessage = 'Your order has been delivered!';
           break;
+        default:
+          statusmessage = 'Your order status has been updated.';
       }
+
+      // ✅ Send the HTML email only if the status is being set to true
       await sendOrderEmail(
         order,
         'Order Status Update',
         orderStatusEmailTemplate(order, statusmessage)
       );
-    }
 
-    // 🔹 Return approval email
-    if (field === 'returnStatus' && value === 'Approved') {
-      await sendOrderEmail(
-        order,
-        'Return Request Approved',
-        returnApprovedEmailTemplate(order)
+      orderRouter.put(
+        '/:id/refund-credited',
+        isAuth,
+        expressAsyncHandler(async (req, res) => {
+          const order = await Order.findById(req.params.id).populate(
+            'user',
+            'name email'
+          );
+
+          if (!order) {
+            return res.status(404).send({ message: 'Order not found' });
+          }
+
+          // Mark refund credited
+          order.refundCredited = true;
+          await order.save();
+
+          try {
+            await sendOrderEmail(
+              order,
+              'Refund Credited',
+              refundCreditedEmailTemplate(order)
+            );
+            res.send({
+              message: 'Refund credited email sent successfully',
+              order,
+            });
+          } catch (error) {
+            console.error('Email send error:', error);
+            res.status(500).send({
+              message: 'Refund credited, but email failed to send',
+              error,
+            });
+          }
+        })
       );
     }
 
@@ -533,31 +563,51 @@ orderRouter.put(
 );
 
 orderRouter.put(
-  '/:id/refund-credited',
+  '/:id/returnStatus',
   isAuth,
   isAdmin,
   expressAsyncHandler(async (req, res) => {
-    const order = await Order.findById(req.params.id).populate(
-      'user',
-      'name email'
-    );
+    const { field, value } = req.body;
+    const order = await Order.findById(req.params.id)
+      .populate('user', 'name email')
+      .populate('orderItems'); // populate items if not already
 
     if (!order) {
       return res.status(404).send({ message: 'Order not found' });
     }
 
-    // Mark refund credited in DB (optional if you track it)
-    order.refundCredited = true;
+    // Update return status
+    if (field === 'returnStatus') {
+      order.returnStatus = value;
+      order.returnedAt = new Date();
+    }
+
     await order.save();
 
-    // Send refund credited email
-    await sendOrderEmail(
-      order,
-      'Refund Credited',
-      refundCreditedEmailTemplate(order)
-    );
+    // Send email when status is Approved or Rejected
+    if (value === 'Approved' || value === 'Rejected') {
+      let subject = '';
+      let htmlTemplate = '';
 
-    res.send({ message: 'Refund credited email sent successfully', order });
+      if (value === 'Approved') {
+        subject = 'Your Return Request Has Been Approved';
+        htmlTemplate = returnApprovedEmailTemplate(order);
+      } else {
+        subject = 'Your Return Request Has Been Rejected';
+        htmlTemplate = returnRejectedEmailTemplate(order); // You'll create this
+      }
+
+      await mailgun()
+        .messages()
+        .send({
+          from: 'ShopFusion <no-reply@shopfusion.com>',
+          to: `${order.user.name} <${order.user.email}>`,
+          subject,
+          html: htmlTemplate,
+        });
+    }
+
+    res.send({ message: `Return status updated to ${value}` });
   })
 );
 

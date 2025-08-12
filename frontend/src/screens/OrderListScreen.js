@@ -118,6 +118,22 @@ export default function OrderListScreen() {
     }
   };
 
+  const retStatus = async (orderId, field, value) => {
+    try {
+      await axios.put(
+        `/api/orders/${orderId}/returnStatus`,
+        { field, value },
+        { headers: { Authorization: `Bearer ${userInfo.token}` } }
+      );
+      const { data } = await axios.get('/api/orders', {
+        headers: { Authorization: `Bearer ${userInfo.token}` },
+      });
+      dispatch({ type: 'FETCH_SUCCESS', payload: data });
+    } catch (err) {
+      alert(getError(err));
+    }
+  };
+
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
   const filteredOrders = orders.filter((order) =>
@@ -318,11 +334,7 @@ export default function OrderListScreen() {
                         className="form-select form-select-sm"
                         value={order.returnStatus || 'Pending'}
                         onChange={(e) =>
-                          updateStatus(
-                            order._id,
-                            'returnStatus',
-                            e.target.value
-                          )
+                          retStatus(order._id, 'returnStatus', e.target.value)
                         }
                       >
                         <option value="Approved">Approved</option>
