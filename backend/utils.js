@@ -320,6 +320,21 @@ export const returnApprovedEmailTemplate = (order) => {
 };
 
 export const refundCreditedEmailTemplate = (order) => {
+  // Calculate IST date = returnedAt + 3 minutes
+  const returnedAtISTPlus3 = order?.returnedAt
+    ? new Date(
+        new Date(order.returnedAt).getTime() + 3 * 60 * 1000
+      ).toLocaleString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        hour12: true,
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : 'Date not available';
+
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
       <div style="background-color: #007bff; padding: 16px; text-align: center;">
@@ -327,16 +342,12 @@ export const refundCreditedEmailTemplate = (order) => {
       </div>
       <div style="padding: 20px;">
         <p>Hi ${order.user.name},</p>
-        <p>We are happy to inform you that your refund for order <b>${
-          order._id
-        }</b> has been credited successfully.</p>
+        <p>We are happy to inform you that your refund for order <b>${order._id}</b> has been credited successfully.</p>
 
         <h3>Refund Details:</h3>
         <ul>
           <li><b>Amount:</b> ₹${order.totalPrice}</li>
-          <li><b>Date:</b> ${new Date().toLocaleString('en-IN', {
-            timeZone: 'Asia/Kolkata',
-          })}</li>
+          <li><b>Date:</b> ${returnedAtISTPlus3}</li>
         </ul>
 
         <p>Thank you for shopping with us. We hope to serve you again soon.</p>
