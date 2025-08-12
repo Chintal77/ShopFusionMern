@@ -51,6 +51,7 @@ export default function OrderListScreen() {
   const [currentPage, setCurrentPage] = useState(1);
   const ordersPerPage = 5;
   const [searchTerm, setSearchTerm] = useState('');
+  const [refundCount, setRefundCount] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -59,6 +60,10 @@ export default function OrderListScreen() {
         const { data } = await axios.get('/api/orders', {
           headers: { Authorization: `Bearer ${userInfo.token}` },
         });
+
+        const count = data.filter((order) => order.returnedAt).length;
+        setRefundCount(count);
+
         dispatch({ type: 'FETCH_SUCCESS', payload: data });
       } catch (err) {
         dispatch({ type: 'FETCH_FAIL', payload: getError(err) });
@@ -160,6 +165,7 @@ export default function OrderListScreen() {
 
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="text-primary fw-bold">📦 Order Management</h2>
+        <h5 className="text-success">Total Refunds: {refundCount}</h5>
       </div>
 
       <div className="mb-3">
@@ -198,6 +204,7 @@ export default function OrderListScreen() {
                   <th>Out for Delivery</th>
                   <th>Delivered</th>
                   <th>Return Status</th>
+                  <th>Refund</th>
                   <th>Change Return Status</th>
                   <th>View</th>
                   <th>Delete</th>
@@ -328,6 +335,15 @@ export default function OrderListScreen() {
                     )}
 
                     <td>{order.returnStatus || 'N/A'}</td>
+
+                    <td
+                      style={{
+                        fontWeight: 'bold',
+                        color: order.returnedAt ? 'green' : 'red',
+                      }}
+                    >
+                      {order.returnedAt ? 'Yes' : 'No'}
+                    </td>
 
                     <td>
                       <select
