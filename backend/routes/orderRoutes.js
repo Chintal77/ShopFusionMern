@@ -12,6 +12,9 @@ import {
   mailgun,
   payOrderEmailTemplate,
   orderStatusEmailTemplate,
+  returnRequestEmailTemplate,
+  returnApprovedEmailTemplate,
+  refundCreditedEmailTemplate,
 } from '../utils.js';
 import mongoose from 'mongoose';
 
@@ -404,7 +407,10 @@ orderRouter.put(
   isAuth,
   expressAsyncHandler(async (req, res) => {
     const { returnReason } = req.body;
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id).populate(
+      'user',
+      'name email'
+    );
 
     if (!order) {
       return res.status(404).send({ message: 'Order not found' });
@@ -428,6 +434,26 @@ orderRouter.put(
     order.returnedAt = new Date();
 
     const updatedOrder = await order.save();
+
+    // 📧 Send Return Request Email
+    mailgun()
+      .messages()
+      .send(
+        {
+          from: 'ShopFusion <no-reply@shopfusion.com>',
+          to: `${order.user.name} <${order.user.email}>`,
+          subject: `Return Request for Order ${order._id}`,
+          html: returnRequestEmailTemplate(order, order.user),
+        },
+        (error, body) => {
+          if (error) {
+            console.error('Email sending error:', error);
+          } else {
+            console.log('Return request email sent:', body);
+          }
+        }
+      );
+
     res.send({ message: 'Return request submitted', order: updatedOrder });
   })
 );
@@ -463,13 +489,15 @@ orderRouter.put(
       return res.status(404).send({ message: 'Order not found' });
     }
 
-    // ✅ Update the order field dynamically
+    // ✅ Update order dynamically
     order[field] = value;
     await order.save();
 
-    // ✅ Determine the status message based on field & value
-    let statusmessage = '';
-    if (value) {
+    // ✅ Default status message
+    let statusmessage = 'Your order status has been updated.';
+
+    // 🔹 Normal order status flow
+    if (value && field !== 'returnStatus') {
       switch (field) {
         case 'isPacking':
           statusmessage = 'Your order is now being packed!';
@@ -483,11 +511,7 @@ orderRouter.put(
         case 'isDelivered':
           statusmessage = 'Your order has been delivered!';
           break;
-        default:
-          statusmessage = 'Your order status has been updated.';
       }
-
-      // ✅ Send the HTML email only if the status is being set to true
       await sendOrderEmail(
         order,
         'Order Status Update',
@@ -495,7 +519,45 @@ orderRouter.put(
       );
     }
 
+    // 🔹 Return approval email
+    if (field === 'returnStatus' && value === 'Approved') {
+      await sendOrderEmail(
+        order,
+        'Return Request Approved',
+        returnApprovedEmailTemplate(order)
+      );
+    }
+
     res.send({ message: 'Order status updated successfully', order });
+  })
+);
+
+orderRouter.put(
+  '/:id/refund-credited',
+  isAuth,
+  isAdmin,
+  expressAsyncHandler(async (req, res) => {
+    const order = await Order.findById(req.params.id).populate(
+      'user',
+      'name email'
+    );
+
+    if (!order) {
+      return res.status(404).send({ message: 'Order not found' });
+    }
+
+    // Mark refund credited in DB (optional if you track it)
+    order.refundCredited = true;
+    await order.save();
+
+    // Send refund credited email
+    await sendOrderEmail(
+      order,
+      'Refund Credited',
+      refundCreditedEmailTemplate(order)
+    );
+
+    res.send({ message: 'Refund credited email sent successfully', order });
   })
 );
 

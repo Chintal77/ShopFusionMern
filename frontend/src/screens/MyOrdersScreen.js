@@ -218,13 +218,27 @@ export default function OrderScreen() {
       const diffMs = now - returnedTime;
 
       if (diffMs >= 3 * 60 * 1000) {
-        setRefundCredited(true); // Already passed 5 min
+        setRefundCredited(true);
+        axios.put(
+          `/api/orders/${order._id}/refund-credited`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${userInfo.token}` },
+          }
+        );
       } else {
         const remainingTime = 5 * 60 * 1000 - diffMs;
         const timer = setTimeout(() => {
           setRefundCredited(true);
+          axios.put(
+            `/api/orders/${order._id}/refund-credited`,
+            {},
+            {
+              headers: { Authorization: `Bearer ${userInfo.token}` },
+            }
+          );
         }, remainingTime);
-        return () => clearTimeout(timer); // cleanup
+        return () => clearTimeout(timer);
       }
     }
   }, [order.returnStatus, order.returnedAt]);
@@ -332,7 +346,7 @@ export default function OrderScreen() {
     </div>
   );
 
-  const updatedAtIST = order?.updatedAt
+  const updatedAtIST = order?.createdAt
     ? new Intl.DateTimeFormat('en-IN', {
         timeZone: 'Asia/Kolkata',
         year: 'numeric',
@@ -341,7 +355,7 @@ export default function OrderScreen() {
         hour: '2-digit',
         minute: '2-digit',
         hour12: true,
-      }).format(new Date(order.updatedAt))
+      }).format(new Date(order.createdAt))
     : 'Date not available';
 
   const returnedAtISTPlus3 = order?.returnedAt

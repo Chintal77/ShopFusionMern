@@ -250,6 +250,102 @@ export const orderStatusEmailTemplate = (order, statusmessage) => `
 </html>
 `;
 
+export const returnRequestEmailTemplate = (order, user) => {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #ff4d4d; padding: 16px; text-align: center;">
+        <h2 style="color: white; margin: 0;">Return Request Submitted</h2>
+      </div>
+      <div style="padding: 20px;">
+        <p>Hi ${user.name},</p>
+        <p>We have received your return request for order <b>${
+          order._id
+        }</b>.</p>
+        <p><b>Reason:</b> ${order.returnReason}</p>
+        <p>Our support team will review and update you shortly.</p>
+
+        <h3>Order Summary:</h3>
+        <ul>
+          ${order.orderItems
+            .map(
+              (item) => `
+              <li>${item.name} - ${item.qty} x ₹${item.price}</li>
+            `
+            )
+            .join('')}
+        </ul>
+
+        <p style="margin-top: 20px;">Thank you for shopping with us.</p>
+      </div>
+      <div style="background-color: #f4f4f4; text-align: center; padding: 10px;">
+        <small>This is an automated message. Please do not reply.</small>
+      </div>
+    </div>
+  `;
+};
+
+export const returnApprovedEmailTemplate = (order) => {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #28a745; padding: 16px; text-align: center;">
+        <h2 style="color: white; margin: 0;">Return Approved</h2>
+      </div>
+      <div style="padding: 20px;">
+        <p>Hi ${order.user.name},</p>
+        <p>Your return request for order <b>${
+          order._id
+        }</b> has been <b>approved</b>.</p>
+        <p>Refund will be processed within 3-5 business days.</p>
+
+        <h3>Returned Items:</h3>
+        <ul>
+          ${order.orderItems
+            .map(
+              (item) => `
+              <li>${item.name} - ${item.qty} x ₹${item.price}</li>
+            `
+            )
+            .join('')}
+        </ul>
+
+        <p style="margin-top: 20px;">Thank you for shopping with us.</p>
+      </div>
+      <div style="background-color: #f4f4f4; text-align: center; padding: 10px;">
+        <small>This is an automated message. Please do not reply.</small>
+      </div>
+    </div>
+  `;
+};
+
+export const refundCreditedEmailTemplate = (order) => {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #007bff; padding: 16px; text-align: center;">
+        <h2 style="color: white; margin: 0;">Refund Credited</h2>
+      </div>
+      <div style="padding: 20px;">
+        <p>Hi ${order.user.name},</p>
+        <p>We are happy to inform you that your refund for order <b>${
+          order._id
+        }</b> has been credited successfully.</p>
+
+        <h3>Refund Details:</h3>
+        <ul>
+          <li><b>Amount:</b> ₹${order.totalPrice}</li>
+          <li><b>Date:</b> ${new Date().toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+          })}</li>
+        </ul>
+
+        <p>Thank you for shopping with us. We hope to serve you again soon.</p>
+      </div>
+      <div style="background-color: #f4f4f4; text-align: center; padding: 10px;">
+        <small>This is an automated message. Please do not reply.</small>
+      </div>
+    </div>
+  `;
+};
+
 export const updateOrderStatus = async (req, res) => {
   const { id } = req.params;
   const { field, value } = req.body;
