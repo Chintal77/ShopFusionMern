@@ -129,7 +129,7 @@ export default function OrderHistoryScreen() {
                           <span className="text-muted">--</span>
                         ) : order.isPaid ? (
                           <span className="text-success fw-bold">
-                            {new Date(order.updatedAt).toLocaleString('en-IN', {
+                            {new Date(order.createdAt).toLocaleString('en-IN', {
                               timeZone: 'Asia/Kolkata',
                               year: 'numeric',
                               month: 'short',

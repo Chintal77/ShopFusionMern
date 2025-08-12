@@ -150,6 +150,23 @@ export default function OrderScreen() {
     { id: 'Card', label: 'Credit/Debit Card', icon: '/icons/card.png' },
   ];
 
+  const [, setOrder] = useState({});
+
+  useEffect(() => {
+    const fetchOrder = async () => {
+      try {
+        const { data } = await axios.get(`/api/orders/${orderId}`, {
+          headers: { Authorization: `Bearer ${userInfo.token}` }, // ✅ Added
+        });
+        setOrder(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchOrder();
+  }, [orderId, userInfo]);
+
   useEffect(() => {
     const fetchOrder = async () => {
       try {
