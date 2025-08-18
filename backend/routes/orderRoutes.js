@@ -538,7 +538,12 @@ orderRouter.put(
       return res.status(404).send({ message: 'Order not found' });
     }
 
-    // Mark refund credited
+    // ✅ Check if already credited
+    if (order.refundCredited) {
+      return res.status(400).send({ message: 'Refund already credited' });
+    }
+
+    // Mark refund credited only once
     order.refundCredited = true;
     await order.save();
 
@@ -553,10 +558,11 @@ orderRouter.put(
         order,
       });
     } catch (error) {
-      console.error('Email send error:', error);
-      res.status(500).send({
-        message: 'Refund credited, but email failed to send',
-        error,
+      console.error('Email send error:', error.message);
+      // Still respond 200 because refund is credited
+      res.send({
+        message: 'Refund credited but email failed to send',
+        order,
       });
     }
   })

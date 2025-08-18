@@ -5,7 +5,7 @@ import axios from 'axios';
 import '../index.css';
 
 // React Bootstrap
-import { Button, ListGroup } from 'react-bootstrap';
+import { Button, Card, Col, ListGroup, Row, Tab, Tabs } from 'react-bootstrap';
 
 // Custom Components
 import MessageBox from '../components/MessageBox';
@@ -44,14 +44,6 @@ const reducer = (state, action) => {
   }
 };
 
-// ------------------ Logger Helper ------------------
-const getLogger = () => {
-  if (process.env.NODE_ENV === 'development') {
-    return require('use-reducer-logger').default;
-  }
-  return (r) => r;
-};
-
 // ------------------ Component ------------------
 function ProductScreen({ cartItems, setCartItems }) {
   const { slug } = useParams();
@@ -62,8 +54,7 @@ function ProductScreen({ cartItems, setCartItems }) {
   // Local state
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
-
-  const logger = getLogger();
+  const [selectedImage, setSelectedImage] = useState('');
 
   // Reducer state
   const [{ loading, error, product, loadingCreateReview }, dispatch] =
@@ -181,17 +172,17 @@ function ProductScreen({ cartItems, setCartItems }) {
 
   // ------------------ Render ------------------
   if (loading) {
-    return <div className="message">Loading product details...</div>;
+    return <LoadingBox />;
   }
 
   if (error) {
     return (
-      <div className="not-found">
-        <h2>Oops! Product Not Found</h2>
-        <p>
+      <div className="not-found text-center py-5">
+        <h2 className="fw-bold">Oops! Product Not Found</h2>
+        <p className="text-muted">
           The product you are looking for doesn’t exist or has been removed.
         </p>
-        <Link to="/" className="back-home-btn">
+        <Link to="/" className="btn btn-outline-primary mt-3">
           🔙 Go Back Home
         </Link>
       </div>
@@ -204,23 +195,69 @@ function ProductScreen({ cartItems, setCartItems }) {
       <div className="row g-5">
         {/* Product Image */}
         <div className="col-md-6">
-          <div className="card shadow-sm border-0 position-relative">
-            {product.badge && (
-              <span className="position-absolute top-0 start-0 translate-middle-y bg-danger text-white px-3 py-1 rounded-end fs-6 mt-3 ms-2 shadow-sm">
-                {typeof product.badge === 'string'
-                  ? product.badge
-                  : `${product.badge}% OFF`}
-              </span>
-            )}
-            <img
-              src={product.image}
-              alt={product.name}
-              className="img-fluid rounded"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = '/images/broken.png';
-              }}
-            />
+          <div className="card shadow-sm border-0 p-3 rounded-3">
+            {/* Main Image */}
+            <div className="text-center">
+              <img
+                src={selectedImage || product.image}
+                alt={product.name}
+                className="img-fluid rounded shadow-sm"
+                style={{
+                  maxHeight: '400px',
+                  objectFit: 'contain',
+                  transition: 'transform 0.3s ease',
+                  cursor: 'zoom-in',
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.transform = 'scale(1.05)')
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.transform = 'scale(1)')
+                }
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = '/images/broken.png';
+                }}
+              />
+            </div>
+
+            {/* Thumbnail Gallery */}
+            <div className="mt-3">
+              <Row xs={4} className="g-3 justify-content-center">
+                {[product.image, ...product.images].map((x) => (
+                  <Col key={x}>
+                    <Card
+                      className={`border-2 shadow-sm ${
+                        selectedImage === x ? 'border-primary' : 'border-light'
+                      }`}
+                      style={{
+                        cursor: 'pointer',
+                        transition: 'transform 0.2s ease',
+                        borderRadius: '10px',
+                      }}
+                      onClick={() => setSelectedImage(x)}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.transform = 'scale(1.05)')
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.transform = 'scale(1)')
+                      }
+                    >
+                      <Card.Img
+                        variant="top"
+                        src={x}
+                        alt="product-thumbnail"
+                        className="rounded"
+                        style={{
+                          height: '80px',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    </Card>
+                  </Col>
+                ))}
+              </Row>
+            </div>
           </div>
         </div>
 
@@ -233,7 +270,7 @@ function ProductScreen({ cartItems, setCartItems }) {
             </div>
 
             {/* Price */}
-            <div className="bg-light p-3 rounded d-flex flex-column gap-1 shadow-sm">
+            <div className="bg-light p-3 rounded shadow-sm">
               <h4 className="fw-bold text-success m-0">
                 ₹{finalPrice.toLocaleString()}
               </h4>
@@ -241,83 +278,76 @@ function ProductScreen({ cartItems, setCartItems }) {
                 <del className="text-secondary">
                   ₹{product.price.toLocaleString()}
                 </del>
-                <span className="badge bg-danger">
+                <span className="text-danger fw-semibold">
                   {discountPercentage}% OFF
                 </span>
               </div>
             </div>
 
-            {/* Description */}
-            <p className="text-muted">{product.description}</p>
-
-            {/* Highlights */}
-            {product.highlights?.length > 0 && (
-              <div>
-                <h6 className="fw-semibold">🔍 Highlights</h6>
-                <ul className="list-group list-group-flush border rounded shadow-sm">
-                  {product.highlights.map((point, index) => (
-                    <li key={index} className="list-group-item">
-                      {point}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Size & Fit */}
-            {product.sizeFit && (
-              <p className="mb-1">
-                <strong>📏 Size & Fit:</strong> {product.sizeFit}
-              </p>
-            )}
-
-            {/* Specifications */}
-            {product.specifications && (
-              <div className="table-responsive">
-                <h6 className="fw-semibold mb-2">📑 Specifications</h6>
-                <table className="table table-bordered rounded shadow-sm overflow-hidden">
-                  <tbody>
-                    {Object.entries(product.specifications).map(
-                      ([key, value]) => (
-                        <tr key={key}>
-                          <th className="bg-light text-uppercase">{key}</th>
-                          <td>{value}</td>
-                        </tr>
-                      )
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* Extra Info */}
-            <div className="text-muted">
-              {product.brand && (
-                <div>
+            {/* Tabs for Details */}
+            <Tabs defaultActiveKey="highlights" className="mb-3">
+              {product.highlights?.length > 0 && (
+                <Tab eventKey="highlights" title="Highlights">
+                  <ul className="list-group list-group-flush">
+                    {product.highlights.map((point, index) => (
+                      <li key={index} className="list-group-item">
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
+                </Tab>
+              )}
+              {product.specifications && (
+                <Tab eventKey="specs" title="Specifications">
+                  <table className="table table-striped">
+                    <tbody>
+                      {Object.entries(product.specifications).map(
+                        ([key, value]) => (
+                          <tr key={key}>
+                            <th className="text-capitalize">{key}</th>
+                            <td>{value}</td>
+                          </tr>
+                        )
+                      )}
+                    </tbody>
+                  </table>
+                </Tab>
+              )}
+              <Tab eventKey="info" title="More Info">
+                <p>
                   🏷️ <strong>Brand:</strong> {product.brand}
-                </div>
-              )}
-              {product.category && (
-                <div>
+                </p>
+                <p>
                   📂 <strong>Category:</strong> {product.category}
-                </div>
-              )}
-              {product.seller && (
-                <div>
-                  🛍️ <strong>Seller:</strong> {product.seller}
-                </div>
-              )}
-              {product.delivery && (
-                <div>
-                  🚚 <strong>Delivery:</strong> {product.delivery}
-                </div>
-              )}
-              {product.returnPolicy && (
-                <div>
+                </p>
+                <p>
+                  🚚 <strong>Delivery:</strong>{' '}
+                  {(() => {
+                    const today = new Date();
+                    const formatDate = (date) =>
+                      date.toLocaleDateString('en-IN', {
+                        day: '2-digit',
+                        month: 'short',
+                      });
+
+                    // start after 2 days
+                    const startDateObj = new Date(today);
+                    startDateObj.setDate(today.getDate() + 2);
+                    const startDate = formatDate(startDateObj);
+
+                    // end after 7 days
+                    const endDateObj = new Date(today);
+                    endDateObj.setDate(today.getDate() + 7);
+                    const endDate = formatDate(endDateObj);
+
+                    return `${startDate} - ${endDate}`;
+                  })()}
+                </p>
+                <p>
                   ↩️ <strong>Return:</strong> {product.returnPolicy}
-                </div>
-              )}
-            </div>
+                </p>
+              </Tab>
+            </Tabs>
 
             {/* Stock Status */}
             <div
@@ -327,43 +357,25 @@ function ProductScreen({ cartItems, setCartItems }) {
             >
               {product.countInStock > 0 ? '✅ In Stock' : '❌ Out of Stock'}
             </div>
-
-            {/* Add to Cart */}
-            <button
-              className={`btn btn-lg ${
-                product.countInStock === 0
-                  ? 'btn-secondary'
-                  : existingQty >= product.countInStock
-                  ? 'btn-warning'
-                  : 'btn-primary'
-              } d-flex align-items-center justify-content-center gap-2`}
-              disabled={
-                product.countInStock === 0 ||
-                existingQty >= product.countInStock
-              }
-              onClick={handleAddToCart}
-              title={
-                product.countInStock === 0
-                  ? 'Out of stock'
-                  : existingQty >= product.countInStock
-                  ? 'You have reached the max quantity available.'
-                  : 'Add this item to your cart.'
-              }
-            >
-              🛒
-              {product.countInStock === 0
-                ? 'Out of Stock'
-                : existingQty >= product.countInStock
-                ? 'Limit Reached'
-                : 'Add to Cart'}
-            </button>
-
-            {/* Back link */}
-            <Link to="/" className="text-decoration-none mt-2">
-              ← Back to Products
-            </Link>
           </div>
         </div>
+      </div>
+
+      {/* -------- Sticky Add to Cart -------- */}
+      <div className="sticky-bottom bg-white p-3 mt-4 shadow d-flex justify-content-between align-items-center">
+        <span className="fw-bold fs-5 text-success">
+          ₹{finalPrice.toLocaleString()}
+        </span>
+        <Button
+          variant={product.countInStock > 0 ? 'primary' : 'secondary'}
+          size="lg"
+          disabled={
+            product.countInStock === 0 || existingQty >= product.countInStock
+          }
+          onClick={handleAddToCart}
+        >
+          🛒 {product.countInStock > 0 ? 'Add to Cart' : 'Out of Stock'}
+        </Button>
       </div>
 
       {/* -------- Reviews Section -------- */}
@@ -371,52 +383,38 @@ function ProductScreen({ cartItems, setCartItems }) {
         <h2
           ref={reviewsRef}
           className="mb-4 text-center fw-bold border-bottom pb-2"
-          style={{ color: '#333' }}
         >
           Customer Reviews
         </h2>
 
         {/* If no review */}
-        <div className="mb-3">
-          {product.reviews.length === 0 && (
-            <MessageBox variant="info">
-              No reviews yet. Be the first to review!
-            </MessageBox>
-          )}
-        </div>
+        {product.reviews.length === 0 && (
+          <MessageBox variant="info">
+            No reviews yet. Be the first to review!
+          </MessageBox>
+        )}
 
         {/* Reviews List */}
         <ListGroup variant="flush" className="mb-4">
           {product.reviews.map((review) => (
-            <ListGroup.Item
-              key={review._id}
-              className="mb-3 p-3 rounded shadow-sm"
-              style={{ backgroundColor: '#fafafa' }}
-            >
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <strong style={{ fontSize: '1.1rem', color: '#007bff' }}>
-                  {review.name}
-                </strong>
+            <ListGroup.Item key={review._id} className="shadow-sm rounded mb-3">
+              <div className="d-flex justify-content-between align-items-center">
+                <h6 className="fw-bold text-primary">{review.name}</h6>
                 <small className="text-muted">
                   {review.createdAt.substring(0, 10)}
                 </small>
               </div>
-              <Rating rating={review.rating} caption=" " />
-              <p
-                className="mt-2"
-                style={{ fontSize: '0.95rem', color: '#444' }}
-              >
-                {review.comment}
-              </p>
+              <div className="mb-2 text-warning">
+                {'★'.repeat(review.rating)}
+                {'☆'.repeat(5 - review.rating)}
+              </div>
+              <p className="mb-0">{review.comment}</p>
             </ListGroup.Item>
           ))}
         </ListGroup>
 
         {/* Review Form */}
-        <div
-          className="p-4 rounded shadow-sm"
-          style={{ backgroundColor: '#f8f9fa' }}
-        >
+        <div className="p-4 rounded shadow-sm bg-light">
           {userInfo ? (
             <form onSubmit={submitHandler}>
               <h3 className="mb-3 fw-semibold">Write a Review</h3>
@@ -461,7 +459,6 @@ function ProductScreen({ cartItems, setCartItems }) {
                   Submit
                 </Button>
               </div>
-
               {loadingCreateReview && <LoadingBox />}
             </form>
           ) : (
