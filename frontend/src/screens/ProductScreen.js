@@ -195,49 +195,66 @@ function ProductScreen({ cartItems, setCartItems }) {
       <div className="row g-5">
         {/* Product Image */}
         <div className="col-md-6">
-          <div className="card shadow-sm border-0 p-3 rounded-3">
+          <div className="card shadow-lg border-0 p-4 rounded-4 bg-light">
             {/* Main Image */}
-            <div className="text-center">
+            <div className="text-center position-relative">
               <img
                 src={selectedImage || product.image}
                 alt={product.name}
-                className="img-fluid rounded shadow-sm"
+                className="img-fluid rounded-4 shadow-sm"
                 style={{
-                  maxHeight: '400px',
+                  maxHeight: '420px',
                   objectFit: 'contain',
-                  transition: 'transform 0.3s ease',
+                  transition: 'transform 0.4s ease, box-shadow 0.3s ease',
                   cursor: 'zoom-in',
                 }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.transform = 'scale(1.05)')
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.transform = 'scale(1)')
-                }
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.07)';
+                  e.currentTarget.style.boxShadow =
+                    '0 8px 25px rgba(0,0,0,0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow =
+                    '0 4px 12px rgba(0,0,0,0.1)';
+                }}
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.src = '/images/broken.png';
                 }}
               />
+
+              {/* Overlay Zoom Icon */}
+              <div
+                className="position-absolute top-50 start-50 translate-middle bg-dark bg-opacity-50 text-white px-3 py-2 rounded-circle"
+                style={{
+                  opacity: 0,
+                  transition: 'opacity 0.3s ease',
+                  pointerEvents: 'none',
+                }}
+              >
+                🔍
+              </div>
             </div>
 
             {/* Thumbnail Gallery */}
-            <div className="mt-3">
+            <div className="mt-4">
               <Row xs={4} className="g-3 justify-content-center">
                 {[product.image, ...product.images].map((x) => (
                   <Col key={x}>
                     <Card
-                      className={`border-2 shadow-sm ${
+                      className={`border-3 shadow-sm ${
                         selectedImage === x ? 'border-primary' : 'border-light'
                       }`}
                       style={{
                         cursor: 'pointer',
-                        transition: 'transform 0.2s ease',
-                        borderRadius: '10px',
+                        transition:
+                          'transform 0.25s ease, border-color 0.25s ease',
+                        borderRadius: '12px',
                       }}
                       onClick={() => setSelectedImage(x)}
                       onMouseEnter={(e) =>
-                        (e.currentTarget.style.transform = 'scale(1.05)')
+                        (e.currentTarget.style.transform = 'scale(1.08)')
                       }
                       onMouseLeave={(e) =>
                         (e.currentTarget.style.transform = 'scale(1)')
@@ -249,8 +266,9 @@ function ProductScreen({ cartItems, setCartItems }) {
                         alt="product-thumbnail"
                         className="rounded"
                         style={{
-                          height: '80px',
+                          height: '90px',
                           objectFit: 'cover',
+                          borderRadius: '10px',
                         }}
                       />
                     </Card>
