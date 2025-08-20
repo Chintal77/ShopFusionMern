@@ -23,6 +23,7 @@
     "mongoose": "^8.16.5",
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",
+    "paytmchecksum": "^1.5.1",
     "streamifier": "^0.1.1",
     "xpress": "^2.4.6"
   },

@@ -482,7 +482,7 @@ function ProductScreen({ cartItems, setCartItems }) {
           ) : (
             <MessageBox>
               Please{' '}
-              <Link to={`/signin?redirect=/product/${product.slug}`}>
+              <Link to={`/login?redirect=/product/${product._id}`}>
                 Sign In
               </Link>{' '}
               to write a review
