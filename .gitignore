@@ -2,7 +2,6 @@
 
 # dependencies
 .env
-config/paytm.js
 node_modules
 /.pnp
 .pnp.js
