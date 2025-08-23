@@ -1,10 +1,10 @@
-// PaymentMethodScreen.js
 import React, { useEffect, useMemo, useReducer, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import Axios from 'axios';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
+import Modal from 'react-bootstrap/Modal';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../payment.css';
@@ -49,6 +49,10 @@ export default function PaymentMethodScreen() {
     expiry: '',
     cvv: '',
   });
+
+  const [showPaymentPopup, setShowPaymentPopup] = useState(false);
+  const [createdOrderId, setCreatedOrderId] = useState(null);
+  const [selectedAccount, setSelectedAccount] = useState('');
 
   useEffect(() => {
     if (!userInfo || !userInfo.token) {
@@ -152,35 +156,53 @@ export default function PaymentMethodScreen() {
         { headers: { authorization: `Bearer ${userInfo.token}` } }
       );
 
-      const createdOrder = data.order;
+      setCreatedOrderId(data.order._id);
 
-      // Step 2: If payment method is NOT PayPal → Update isPaid in DB
+      // ✅ If payment is NOT PayPal → Show Payment Popup
       if (paymentMethodName !== 'PayPal') {
-        await Axios.put(
-          `/api/orders/${createdOrder._id}/pay`,
-          {
-            isPaid: true,
-            paidAt: new Date(),
-          },
-          {
-            headers: { authorization: `Bearer ${userInfo.token}` },
-          }
-        );
+        setShowPaymentPopup(true);
+        return;
       }
 
+      // ✅ PayPal → Directly redirect
       dispatch({ type: 'CREATE_SUCCESS' });
       localStorage.removeItem(`cartItems_${userInfo.email}`);
-
-      toast.success(
-        paymentMethodName !== 'PayPal'
-          ? `✅ Payment completed via ${paymentMethodName}`
-          : '✅ Order created successfully'
-      );
-
-      navigate(`/order/${createdOrder._id}`);
+      toast.success('✅ Order created successfully');
+      navigate(`/order/${data.order._id}`);
     } catch (err) {
       dispatch({ type: 'CREATE_FAIL' });
       toast.error('❌ ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handlePayNow = async () => {
+    if (!selectedAccount) {
+      toast.error('⚠️ Please select an account!');
+      return;
+    }
+
+    try {
+      if (!createdOrderId) return;
+
+      // ✅ Mark Order Paid in DB
+      await Axios.put(
+        `/api/orders/${createdOrderId}/pay`,
+        {
+          isPaid: true,
+          paidAt: new Date(),
+        },
+        {
+          headers: { authorization: `Bearer ${userInfo.token}` },
+        }
+      );
+
+      toast.success(`✅ Payment completed via ${paymentMethodName}`);
+      setShowPaymentPopup(false);
+
+      // ✅ Redirect to order page
+      window.location.href = `http://localhost:3000/order/${createdOrderId}`;
+    } catch (err) {
+      toast.error('❌ Payment confirmation failed');
     }
   };
 
@@ -190,6 +212,27 @@ export default function PaymentMethodScreen() {
     { id: 'Paytm', label: 'Paytm', icon: '/icons/paytm.png' },
     { id: 'PayPal', label: 'PayPal', icon: '/icons/paypal.png' },
     { id: 'Card', label: 'Credit/Debit Card', icon: '/icons/card.png' },
+  ];
+
+  const sbiAccounts = [
+    {
+      id: 'acc1',
+      accountNumber: '123456789012',
+      ifsc: 'SBIN0001234',
+      branch: 'Delhi Main Branch',
+    },
+    {
+      id: 'acc2',
+      accountNumber: '987654321098',
+      ifsc: 'SBIN0005678',
+      branch: 'Mumbai Central',
+    },
+    {
+      id: 'acc3',
+      accountNumber: '456789123456',
+      ifsc: 'SBIN0009999',
+      branch: 'Bangalore City',
+    },
   ];
 
   return (
@@ -343,6 +386,57 @@ export default function PaymentMethodScreen() {
           </div>
         </div>
       </div>
+
+      {/* ✅ Payment Popup */}
+      <Modal
+        show={showPaymentPopup}
+        onHide={() => setShowPaymentPopup(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Complete Your Payment</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>
+            Please select your SBI account and click on <strong>Pay Now</strong>{' '}
+            to complete the payment.
+          </p>
+          <Form>
+            {sbiAccounts.map((acc) => (
+              <div key={acc.id} className="account-option">
+                <Form.Check
+                  type="radio"
+                  name="account"
+                  id={acc.id}
+                  value={acc.id}
+                  checked={selectedAccount === acc.id}
+                  onChange={(e) => setSelectedAccount(e.target.value)}
+                />
+                <label htmlFor={acc.id}>
+                  <strong>Account No:</strong> {acc.accountNumber} <br />
+                  <strong>IFSC:</strong> {acc.ifsc} <br />
+                  <strong>Branch:</strong> {acc.branch}
+                </label>
+              </div>
+            ))}
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowPaymentPopup(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="success"
+            onClick={handlePayNow}
+            disabled={!selectedAccount}
+          >
+            Pay Now
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }
