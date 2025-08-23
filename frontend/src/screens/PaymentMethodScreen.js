@@ -63,6 +63,7 @@ export default function PaymentMethodScreen() {
     if (!paymentMethodName)
       return toast.error('❌ Please select a payment method');
 
+    // ✅ Validate Card Details if Card Selected
     if (paymentMethodName === 'Card') {
       const { number, expiry, cvv } = cardDetails;
       if (!number || !expiry || !cvv) {
@@ -71,6 +72,70 @@ export default function PaymentMethodScreen() {
       }
     }
 
+    // ✅ Updated Paytm Integration
+    if (paymentMethodName === 'Paytm') {
+      try {
+        const { data } = await Axios.post(
+          'http://localhost:5040/api/paytm/initiate',
+          {
+            amount: grandTotal,
+            email: userInfo.email,
+            orderId: 'ORDER_' + new Date().getTime(),
+          }
+        );
+
+        console.log('Paytm API Response:', data);
+
+        if (data.success && data.txnToken) {
+          const config = {
+            root: '',
+            flow: 'DEFAULT',
+            data: {
+              orderId: data.orderId,
+              token: data.txnToken,
+              tokenType: 'TXN_TOKEN',
+              amount: data.amount,
+            },
+            handler: {
+              notifyMerchant: function (eventName, data) {
+                console.log('Payment Event:', eventName, data);
+              },
+            },
+          };
+
+          const paytmMID = process.env.REACT_APP_PAYTM_MID;
+          const paytmEnv = process.env.REACT_APP_PAYTM_ENV;
+
+          const paytmScriptURL =
+            paytmEnv === 'stage'
+              ? `https://securegw-stage.paytm.in/merchantpgpui/checkoutjs/merchants/${paytmMID}.js`
+              : `https://securegw.paytm.in/merchantpgpui/checkoutjs/merchants/${paytmMID}.js`;
+
+          const script = document.createElement('script');
+          script.src = paytmScriptURL;
+          script.async = true;
+
+          script.onload = async () => {
+            if (window.Paytm && window.Paytm.CheckoutJS) {
+              await window.Paytm.CheckoutJS.init(config);
+              window.Paytm.CheckoutJS.invoke();
+            } else {
+              toast.error('Paytm SDK failed to load.');
+            }
+          };
+
+          document.body.appendChild(script);
+        } else {
+          toast.error(data.message || 'Paytm initialization failed!');
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error('Payment failed!');
+      }
+      return;
+    }
+
+    // ✅ For Other Payment Methods (PhonePe, GPay, PayPal, COD, etc.)
     try {
       dispatch({ type: 'CREATE_REQUEST' });
 

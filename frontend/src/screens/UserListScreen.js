@@ -9,6 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import { confirmAlert } from 'react-confirm-alert';
 import { toast } from 'react-toastify';
 import { FaUsersCog } from 'react-icons/fa';
+import { motion } from 'framer-motion';
+import '../UserListScreen.css';
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -21,11 +23,7 @@ const reducer = (state, action) => {
     case 'DELETE_REQUEST':
       return { ...state, loadingDelete: true, successDelete: false };
     case 'DELETE_SUCCESS':
-      return {
-        ...state,
-        loadingDelete: false,
-        successDelete: true,
-      };
+      return { ...state, loadingDelete: false, successDelete: true };
     case 'DELETE_FAIL':
       return { ...state, loadingDelete: false };
     case 'DELETE_RESET':
@@ -67,6 +65,7 @@ export default function UserListScreen() {
       fetchData();
     }
   }, [userInfo, successDelete]);
+
   const deleteHandler = (user) => {
     confirmAlert({
       title: '🗑️ Confirm Deletion',
@@ -98,33 +97,33 @@ export default function UserListScreen() {
   };
 
   return (
-    <div className="container my-4">
+    <div className="container my-4 user-list-container">
       <Helmet>
         <title>User Management</title>
       </Helmet>
 
-      <div className="card shadow border-0">
-        <div
-          className="card-header text-white d-flex align-items-center"
-          style={{
-            background: 'linear-gradient(to right, #4b6cb7, #182848)',
-            borderTopLeftRadius: '0.5rem',
-            borderTopRightRadius: '0.5rem',
-          }}
-        >
-          <FaUsersCog className="me-2 fs-4" />
+      <motion.div
+        className="card shadow border-0"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        {/* HEADER */}
+        <div className="card-header custom-header d-flex align-items-center">
+          <FaUsersCog className="me-2 fs-3" />
           <h4 className="mb-0">User Management</h4>
         </div>
 
-        <div className="card-body">
+        {/* BODY */}
+        <div className="card-body p-3">
           {loading ? (
             <LoadingBox />
           ) : error ? (
             <MessageBox variant="danger">{error}</MessageBox>
           ) : (
             <div className="table-responsive">
-              <table className="table table-hover table-bordered align-middle text-center">
-                <thead className="table-dark">
+              <table className="table table-hover table-striped table-bordered align-middle text-center custom-table">
+                <thead>
                   <tr>
                     <th>ID</th>
                     <th>Name</th>
@@ -135,7 +134,13 @@ export default function UserListScreen() {
                 </thead>
                 <tbody>
                   {users.map((user) => (
-                    <tr key={user._id}>
+                    <motion.tr
+                      key={user._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4 }}
+                      className="table-row"
+                    >
                       <td>{user._id.slice(0, 8)}...</td>
                       <td>{user.name}</td>
                       <td>{user.email}</td>
@@ -150,26 +155,26 @@ export default function UserListScreen() {
                       </td>
                       <td>
                         <button
-                          className="btn btn-outline-primary btn-sm me-2"
+                          className="btn btn-edit btn-sm me-2"
                           onClick={() => navigate(`/admin/user/${user._id}`)}
                         >
                           ✏️ Edit
                         </button>
                         <button
-                          className="btn btn-outline-danger btn-sm"
+                          className="btn btn-delete btn-sm"
                           onClick={() => deleteHandler(user)}
                         >
                           🗑️ Delete
                         </button>
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

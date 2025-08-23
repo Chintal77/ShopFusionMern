@@ -7,6 +7,8 @@ import productRouter from './routes/productRoutes.js';
 import userRouter from './routes/userRoutes.js';
 import orderRouter from './routes/orderRoutes.js';
 import uploadRouter from './routes/uploadRoutes.js';
+import router from './routes/paytmRoutes.js';
+import cors from 'cors';
 
 dotenv.config();
 mongoose
@@ -20,6 +22,8 @@ mongoose
 
 const app = express();
 
+app.use(cors({ origin: '*' }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -28,11 +32,13 @@ app.get('/api/keys/paypal', (req, res) => {
 });
 
 app.use('/api/seed', seedRouter);
+
 // Route to get all products
 app.use('/api/products', productRouter);
 app.use('/api/users', userRouter);
 app.use('/api/orders', orderRouter);
 app.use('/api/upload', uploadRouter);
+app.use('/api/paytm', router);
 
 // Route to get a single product by slug
 app.get('/api/products/:slug', (req, res) => {
