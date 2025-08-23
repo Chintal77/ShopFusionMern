@@ -9,7 +9,6 @@ import { useNavigate } from 'react-router-dom';
 import { confirmAlert } from 'react-confirm-alert';
 import { toast } from 'react-toastify';
 import { FaUsersCog } from 'react-icons/fa';
-import { motion } from 'framer-motion';
 import '../UserListScreen.css';
 
 const reducer = (state, action) => {
@@ -102,12 +101,8 @@ export default function UserListScreen() {
         <title>User Management</title>
       </Helmet>
 
-      <motion.div
-        className="card shadow border-0"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
+      {/* Card */}
+      <div className="card shadow border-0 custom-card">
         {/* HEADER */}
         <div className="card-header custom-header d-flex align-items-center">
           <FaUsersCog className="me-2 fs-3" />
@@ -134,13 +129,7 @@ export default function UserListScreen() {
                 </thead>
                 <tbody>
                   {users.map((user) => (
-                    <motion.tr
-                      key={user._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4 }}
-                      className="table-row"
-                    >
+                    <tr key={user._id} className="table-row">
                       <td>{user._id.slice(0, 8)}...</td>
                       <td>{user.name}</td>
                       <td>{user.email}</td>
@@ -167,14 +156,14 @@ export default function UserListScreen() {
                           🗑️ Delete
                         </button>
                       </td>
-                    </motion.tr>
+                    </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
