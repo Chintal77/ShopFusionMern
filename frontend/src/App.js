@@ -26,6 +26,7 @@ import ProductEditScreen from './screens/ProductEditScreen';
 import OrderListScreen from './screens/OrderListScreen';
 import UserListScreen from './screens/UserListScreen';
 import UserEditScreen from './screens/UserEditScreen';
+import AiChat from './components/AiChat';
 
 function App() {
   const [cartItems, setCartItems] = useState(() => {
@@ -157,6 +158,10 @@ function App() {
               }
             ></Route>
           </Routes>
+
+          <div>
+            <AiChat />
+          </div>
         </main>
         <footer className="footer">
           &copy; {new Date().getFullYear()} ShopFusion. All rights reserved.

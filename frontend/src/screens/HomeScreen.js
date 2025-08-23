@@ -4,6 +4,8 @@ import { useEffect, useReducer, useState, useCallback } from 'react';
 import logger from 'use-reducer-logger';
 import { toast } from 'react-toastify';
 import '../HomeScreen.css';
+import '../ChatBot.css';
+import { askGeminiAI } from '../services/aiService'; // ✅ Import Gemini AI Service
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -29,6 +31,11 @@ function HomeScreen({ cartItems, setCartItems }) {
   const [showRecovery, setShowRecovery] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
 
+  const [showChat, setShowChat] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+
   const navigate = useNavigate();
 
   const fetchData = useCallback(async () => {
@@ -53,7 +60,6 @@ function HomeScreen({ cartItems, setCartItems }) {
     const parsedUser = storedUser ? JSON.parse(storedUser) : null;
     setUserInfo(parsedUser);
 
-    // Load user-specific cart items safely
     if (parsedUser?.email) {
       const storedCart = localStorage.getItem(`cartItems_${parsedUser.email}`);
       if (storedCart) {
@@ -116,7 +122,7 @@ function HomeScreen({ cartItems, setCartItems }) {
           price: product.price,
           quantity: 1,
           countInStock: product.countInStock,
-          product: product._id, // ✅ critical field
+          product: product._id,
         };
 
         updatedCart = [...existingCart, newItem];
@@ -134,6 +140,28 @@ function HomeScreen({ cartItems, setCartItems }) {
       alert('⚠️ Error checking stock. Please try again later.');
       console.error(err);
     }
+  };
+
+  // ✅ Updated sendMessage to use Gemini AI instead of OpenAI
+  const sendMessage = async () => {
+    if (!input.trim()) return;
+
+    const newMessage = { role: 'user', text: input };
+    setMessages((prev) => [...prev, newMessage]);
+    setInput('');
+    setIsTyping(true);
+
+    try {
+      const answer = await askGeminiAI(input); // ✅ Fetch from Gemini AI
+      setMessages((prev) => [...prev, { role: 'bot', text: answer }]);
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        { role: 'bot', text: '⚠️ Something went wrong. Please try again.' },
+      ]);
+    }
+
+    setIsTyping(false);
   };
 
   return (
@@ -262,6 +290,44 @@ function HomeScreen({ cartItems, setCartItems }) {
           )}
         </div>
       </main>
+
+      {/* Floating Chatbot Icon */}
+      <div className="chatbot-icon" onClick={() => setShowChat(!showChat)}>
+        💬
+      </div>
+
+      {/* Chatbox */}
+      {showChat && (
+        <div className="chatbot-container">
+          <div className="chat-header">
+            <h5>ShopFusion AI</h5>
+            <button onClick={() => setShowChat(false)}>✖</button>
+          </div>
+          <div className="chat-body">
+            {messages.map((msg, index) => (
+              <div
+                key={index}
+                className={`chat-msg ${
+                  msg.role === 'user' ? 'user-msg' : 'bot-msg'
+                }`}
+              >
+                {msg.text}
+              </div>
+            ))}
+            {isTyping && <div className="typing">AI is typing...</div>}
+          </div>
+          <div className="chat-footer">
+            <input
+              type="text"
+              placeholder="Ask something..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+            />
+            <button onClick={sendMessage}>Send</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
