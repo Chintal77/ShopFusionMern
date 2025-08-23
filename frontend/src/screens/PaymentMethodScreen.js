@@ -72,7 +72,7 @@ export default function PaymentMethodScreen() {
       }
     }
 
-    // ✅ Updated Paytm Integration
+    // ✅ Paytm Payment Flow
     if (paymentMethodName === 'Paytm') {
       try {
         const { data } = await Axios.post(
@@ -83,8 +83,6 @@ export default function PaymentMethodScreen() {
             orderId: 'ORDER_' + new Date().getTime(),
           }
         );
-
-        console.log('Paytm API Response:', data);
 
         if (data.success && data.txnToken) {
           const config = {
@@ -135,10 +133,11 @@ export default function PaymentMethodScreen() {
       return;
     }
 
-    // ✅ For Other Payment Methods (PhonePe, GPay, PayPal, COD, etc.)
+    // ✅ For Other Payment Methods (PhonePe, GPay, Card, COD, etc.)
     try {
       dispatch({ type: 'CREATE_REQUEST' });
 
+      // Step 1: Create order
       const { data } = await Axios.post(
         '/api/orders',
         {
@@ -153,9 +152,32 @@ export default function PaymentMethodScreen() {
         { headers: { authorization: `Bearer ${userInfo.token}` } }
       );
 
+      const createdOrder = data.order;
+
+      // Step 2: If payment method is NOT PayPal → Update isPaid in DB
+      if (paymentMethodName !== 'PayPal') {
+        await Axios.put(
+          `/api/orders/${createdOrder._id}/pay`,
+          {
+            isPaid: true,
+            paidAt: new Date(),
+          },
+          {
+            headers: { authorization: `Bearer ${userInfo.token}` },
+          }
+        );
+      }
+
       dispatch({ type: 'CREATE_SUCCESS' });
       localStorage.removeItem(`cartItems_${userInfo.email}`);
-      navigate(`/order/${data.order._id}`);
+
+      toast.success(
+        paymentMethodName !== 'PayPal'
+          ? `✅ Payment completed via ${paymentMethodName}`
+          : '✅ Order created successfully'
+      );
+
+      navigate(`/order/${createdOrder._id}`);
     } catch (err) {
       dispatch({ type: 'CREATE_FAIL' });
       toast.error('❌ ' + (err.response?.data?.message || err.message));

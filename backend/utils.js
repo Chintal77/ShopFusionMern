@@ -335,25 +335,66 @@ export const refundCreditedEmailTemplate = (order) => {
       })
     : 'Date not available';
 
+  // Fallbacks in case values are missing
+  const transactionId =
+    order?.transactionId || `TXN${Math.floor(Math.random() * 1000000000)}`;
+  const refundMode = order?.refundMode || 'Original Payment Method';
+  const paymentGateway = order?.paymentGateway || 'Paytm / Razorpay';
+  const estimatedDate = order?.estimatedCreditDate
+    ? new Date(order.estimatedCreditDate).toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      })
+    : returnedAtISTPlus3;
+
   return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+    <div style="font-family: Arial, sans-serif; max-width: 650px; margin: auto; border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden; box-shadow: 0px 4px 12px rgba(0,0,0,0.1);">
       <div style="background-color: #007bff; padding: 16px; text-align: center;">
-        <h2 style="color: white; margin: 0;">Refund Credited</h2>
+        <h2 style="color: white; margin: 0;">Refund Successfully Credited</h2>
       </div>
-      <div style="padding: 20px;">
-        <p>Hi ${order.user.name},</p>
-        <p>We are happy to inform you that your refund for order <b>${order._id}</b> has been credited successfully.</p>
 
-        <h3>Refund Details:</h3>
-        <ul>
-          <li><b>Amount:</b> ₹${order.totalPrice}</li>
-          <li><b>Date:</b> ${returnedAtISTPlus3}</li>
-        </ul>
+      <div style="padding: 20px; color: #333;">
+        <p>Hi <b>${order.user.name}</b>,</p>
+        <p>We're happy to inform you that your refund for order <b>${order._id}</b> has been successfully processed and credited to your account.</p>
 
-        <p>Thank you for shopping with us. We hope to serve you again soon.</p>
+        <h3 style="color: #007bff; margin-top: 20px;">Refund Details</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;"><b>Refund Amount:</b></td>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;">₹${order.totalPrice}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;"><b>Transaction ID:</b></td>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;">${transactionId}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;"><b>Refund Mode:</b></td>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;">${refundMode}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;"><b>Payment Gateway:</b></td>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;">${paymentGateway}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;"><b>Refund Date:</b></td>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;">${returnedAtISTPlus3}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px;"><b>Expected Credit By:</b></td>
+            <td style="padding: 8px;">${estimatedDate}</td>
+          </tr>
+        </table>
+
+        <p style="margin-top: 20px;">If you haven't received the refund yet, please check with your bank or payment provider. It may take <b>2-4 working days</b> depending on your payment method.</p>
+
+        <p>For any queries, feel free to <a href="mailto:support@shopfusion.com" style="color: #007bff; text-decoration: none;">contact our support team</a>.</p>
+
+        <p>Thank you for shopping with <b>ShopFusion</b>! We hope to serve you again soon.</p>
       </div>
-      <div style="background-color: #f4f4f4; text-align: center; padding: 10px;">
-        <small>This is an automated message. Please do not reply.</small>
+
+      <div style="background-color: #f4f4f4; text-align: center; padding: 12px;">
+        <small style="color: #666;">This is an automated message. Please do not reply.</small>
       </div>
     </div>
   `;

@@ -326,6 +326,7 @@ export default function OrderScreen() {
 
   const savePaymentMethod = async () => {
     try {
+      // Save payment method first
       await axios.put(
         `/api/orders/${orderId}/payment-method`,
         { paymentMethod: selectedPaymentMethod },
@@ -333,10 +334,26 @@ export default function OrderScreen() {
           headers: { authorization: `Bearer ${userInfo.token}` },
         }
       );
-      toast.success('Payment method updated successfully');
+
+      // ✅ If user selects anything other than PayPal → Mark as Paid
+      if (selectedPaymentMethod !== 'PayPal') {
+        await axios.put(
+          `/api/orders/${orderId}/pay`,
+          { isPaid: true, paidAt: new Date() },
+          {
+            headers: { authorization: `Bearer ${userInfo.token}` },
+          }
+        );
+        toast.success(`Payment completed via ${selectedPaymentMethod}`);
+      } else {
+        toast.success('Payment method updated successfully');
+      }
+
+      // Fetch the updated order
       const { data: updatedOrder } = await axios.get(`/api/orders/${orderId}`, {
         headers: { authorization: `Bearer ${userInfo.token}` },
       });
+
       dispatch({ type: 'FETCH_SUCCESS', payload: updatedOrder });
       setShowCardModal(false);
     } catch (err) {
