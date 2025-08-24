@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 import { getError } from '../utils';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import Spinner from 'react-bootstrap/Spinner';
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -37,8 +38,11 @@ export default function ProfileScreen() {
     confirmPassword: '',
   });
 
-  const [role, setRole] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isSeller, setIsSeller] = useState(false);
+  const [userType, setUserType] = useState('Customer');
   const [validated, setValidated] = useState(false);
+
   const [{ loadingUpdate }, dispatch] = useReducer(reducer, {
     loadingUpdate: false,
   });
@@ -58,7 +62,19 @@ export default function ProfileScreen() {
         password: '',
         confirmPassword: '',
       });
-      setRole(userInfo.isAdmin ? 'Admin' : 'Customer');
+
+      // ✅ Get Admin & Seller status from backend
+      setIsAdmin(userInfo.isAdmin || false);
+      setIsSeller(userInfo.isSeller || false);
+
+      // ✅ Determine User Type
+      if (userInfo.isAdmin) {
+        setUserType('Admin');
+      } else if (userInfo.isSeller) {
+        setUserType('Seller');
+      } else {
+        setUserType('Customer');
+      }
     }
   }, [userInfo, navigate]);
 
@@ -84,7 +100,6 @@ export default function ProfileScreen() {
       pinCode: form.pinCode,
     };
 
-    // Only add password if it's being updated
     if (form.password) {
       const oldPasswords =
         JSON.parse(localStorage.getItem('oldPasswords')) || [];
@@ -94,7 +109,6 @@ export default function ProfileScreen() {
         return;
       }
 
-      // Save only last 3 passwords
       const newHistory = [form.password, ...oldPasswords].slice(0, 3);
       localStorage.setItem('oldPasswords', JSON.stringify(newHistory));
 
@@ -109,9 +123,8 @@ export default function ProfileScreen() {
       dispatch({ type: 'UPDATE_SUCCESS' });
       ctxDispatch({ type: 'USER_SIGNIN', payload: data });
       localStorage.setItem('userInfo', JSON.stringify(data));
-      toast.success('✅ User updated successfully');
+      toast.success('✅ Profile updated successfully');
 
-      // ✅ Clear password fields and reset validation
       setValidated(false);
       setForm((prev) => ({
         ...prev,
@@ -135,13 +148,51 @@ export default function ProfileScreen() {
       </Helmet>
 
       <div className="row justify-content-center">
-        <div className="col-md-8">
-          <div className="card shadow-sm border-0 rounded-4">
+        <div className="col-md-8 col-lg-6">
+          <div className="card shadow-lg border-0 rounded-4">
             <div className="card-body p-4">
-              <h2 className="mb-3 text-center">Update Profile</h2>
-              <p className="text-muted text-center mb-4">
-                <strong>User Type:</strong> {role}
-              </p>
+              <h2 className="mb-3 text-center fw-bold text-primary">
+                Update Profile
+              </h2>
+
+              {/* ✅ User Type + Admin & Seller Status */}
+              <div className="mb-4 text-center">
+                <p className="fw-bold fs-5 mb-2">
+                  <span className="text-dark">User Type: </span>
+                  <span
+                    className={
+                      userType === 'Admin'
+                        ? 'text-primary fw-bold'
+                        : userType === 'Seller'
+                        ? 'text-warning fw-bold'
+                        : 'text-secondary fw-bold'
+                    }
+                  >
+                    {userType}
+                  </span>
+                </p>
+
+                <p className="fw-semibold mb-1">
+                  <span className="text-dark">Admin Access: </span>
+                  <span
+                    className={
+                      isAdmin ? 'text-success fw-bold' : 'text-danger fw-bold'
+                    }
+                  >
+                    {isAdmin ? 'Yes' : 'No'}
+                  </span>
+                </p>
+                <p className="fw-semibold mb-0">
+                  <span className="text-dark">Seller Access: </span>
+                  <span
+                    className={
+                      isSeller ? 'text-success fw-bold' : 'text-danger fw-bold'
+                    }
+                  >
+                    {isSeller ? 'Yes' : 'No'}
+                  </span>
+                </p>
+              </div>
 
               <Form noValidate validated={validated} onSubmit={submitHandler}>
                 {[
@@ -159,7 +210,7 @@ export default function ProfileScreen() {
                   { id: 'pinCode', label: 'Pin Code', required: true },
                 ].map(({ id, label, type = 'text', required }) => (
                   <Form.Group className="mb-3" controlId={id} key={id}>
-                    <Form.Label>{label}</Form.Label>
+                    <Form.Label className="fw-semibold">{label}</Form.Label>
                     <Form.Control
                       required={required}
                       type={type}
@@ -175,7 +226,7 @@ export default function ProfileScreen() {
                 ))}
 
                 <Form.Group className="mb-3" controlId="password">
-                  <Form.Label>New Password</Form.Label>
+                  <Form.Label className="fw-semibold">New Password</Form.Label>
                   <Form.Control
                     type="password"
                     name="password"
@@ -186,7 +237,9 @@ export default function ProfileScreen() {
                 </Form.Group>
 
                 <Form.Group className="mb-4" controlId="confirmPassword">
-                  <Form.Label>Confirm New Password</Form.Label>
+                  <Form.Label className="fw-semibold">
+                    Confirm New Password
+                  </Form.Label>
                   <Form.Control
                     type="password"
                     name="confirmPassword"
@@ -200,8 +253,20 @@ export default function ProfileScreen() {
                     variant="primary"
                     type="submit"
                     disabled={loadingUpdate}
+                    className="py-2 fw-semibold"
                   >
-                    {loadingUpdate ? 'Updating...' : 'Update Profile'}
+                    {loadingUpdate ? (
+                      <>
+                        <Spinner
+                          animation="border"
+                          size="sm"
+                          className="me-2"
+                        />
+                        Updating...
+                      </>
+                    ) : (
+                      'Update Profile'
+                    )}
                   </Button>
                 </div>
               </Form>

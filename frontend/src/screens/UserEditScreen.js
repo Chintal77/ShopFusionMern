@@ -48,6 +48,7 @@ export default function UserEditScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSeller, setIsSeller] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -59,6 +60,7 @@ export default function UserEditScreen() {
         setName(data.name);
         setEmail(data.email);
         setIsAdmin(data.isAdmin);
+        setIsSeller(data.isSeller || false); // ✅ Fetch seller status
         dispatch({ type: 'FETCH_SUCCESS' });
       } catch (err) {
         dispatch({
@@ -76,7 +78,7 @@ export default function UserEditScreen() {
       dispatch({ type: 'UPDATE_REQUEST' });
       await axios.put(
         `/api/users/${userId}`,
-        { _id: userId, name, email, isAdmin },
+        { _id: userId, name, email, isAdmin, isSeller }, // ✅ Send isSeller also
         {
           headers: { Authorization: `Bearer ${userInfo.token}` },
         }
@@ -137,12 +139,23 @@ export default function UserEditScreen() {
                 />
               </Form.Group>
 
+              {/* ✅ Admin Access Switch */}
               <Form.Check
                 type="switch"
                 id="isAdmin"
                 label="Admin Access"
                 checked={isAdmin}
                 onChange={(e) => setIsAdmin(e.target.checked)}
+                className="mb-3"
+              />
+
+              {/* ✅ Seller Access Switch */}
+              <Form.Check
+                type="switch"
+                id="isSeller"
+                label="Seller Access"
+                checked={isSeller}
+                onChange={(e) => setIsSeller(e.target.checked)}
                 className="mb-4"
               />
 

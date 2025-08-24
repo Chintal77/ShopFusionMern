@@ -40,9 +40,21 @@ userRouter.put(
     if (user) {
       user.name = req.body.name || user.name;
       user.email = req.body.email || user.email;
-      user.isAdmin = Boolean(req.body.isAdmin);
+      user.isAdmin =
+        req.body.isAdmin !== undefined
+          ? Boolean(req.body.isAdmin)
+          : user.isAdmin;
+      user.isSeller =
+        req.body.isSeller !== undefined
+          ? Boolean(req.body.isSeller)
+          : user.isSeller;
+
       const updatedUser = await user.save();
-      res.send({ message: 'User Updated', user: updatedUser });
+
+      res.send({
+        message: 'User Updated Successfully',
+        user: updatedUser,
+      });
     } else {
       res.status(404).send({ message: 'User Not Found' });
     }

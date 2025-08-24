@@ -124,6 +124,7 @@ export default function UserListScreen() {
                     <th>Name</th>
                     <th>Email</th>
                     <th>Admin</th>
+                    <th>Seller</th> {/* ✅ NEW COLUMN */}
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -141,6 +142,15 @@ export default function UserListScreen() {
                         }
                       >
                         {user.isAdmin ? 'Yes' : 'No'}
+                      </td>
+                      <td
+                        className={
+                          user.isSeller
+                            ? 'text-primary fw-bold'
+                            : 'text-secondary'
+                        }
+                      >
+                        {user.isSeller ? 'Yes' : 'No'}
                       </td>
                       <td>
                         <button
