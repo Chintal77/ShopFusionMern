@@ -36,6 +36,9 @@ export default function ProfileScreen() {
     pinCode: '',
     password: '',
     confirmPassword: '',
+    sellerName: '',
+    sellerLogo: '',
+    sellerDescription: '',
   });
 
   const [isAdmin, setIsAdmin] = useState(false);
@@ -48,6 +51,25 @@ export default function ProfileScreen() {
   });
 
   useEffect(() => {
+    const fetchSellerDetails = async () => {
+      if (userInfo?.isSeller) {
+        try {
+          const { data } = await axios.get(`/api/sellers/${userInfo._id}`, {
+            headers: { Authorization: `Bearer ${userInfo.token}` },
+          });
+
+          setForm((prev) => ({
+            ...prev,
+            sellerName: data.seller?.name || '',
+            sellerLogo: data.seller?.logo || '',
+            sellerDescription: data.seller?.description || '',
+          }));
+        } catch (err) {
+          toast.error(getError(err));
+        }
+      }
+    };
+
     if (!userInfo) {
       navigate('/login?redirect=/profile');
     } else {
@@ -61,17 +83,19 @@ export default function ProfileScreen() {
         pinCode: userInfo.pinCode || '',
         password: '',
         confirmPassword: '',
+        sellerName: userInfo.seller?.name || '',
+        sellerLogo: userInfo.seller?.logo || '',
+        sellerDescription: userInfo.seller?.description || '',
       });
 
-      // ✅ Get Admin & Seller status from backend
       setIsAdmin(userInfo.isAdmin || false);
       setIsSeller(userInfo.isSeller || false);
 
-      // ✅ Determine User Type
       if (userInfo.isAdmin) {
         setUserType('Admin');
       } else if (userInfo.isSeller) {
         setUserType('Seller');
+        fetchSellerDetails(); // ✅ Fetch seller info when user is seller
       } else {
         setUserType('Customer');
       }
@@ -100,6 +124,9 @@ export default function ProfileScreen() {
       pinCode: form.pinCode,
     };
 
+    let isPasswordChanged = false;
+
+    // ✅ If password entered → check history & update
     if (form.password) {
       const oldPasswords =
         JSON.parse(localStorage.getItem('oldPasswords')) || [];
@@ -113,6 +140,16 @@ export default function ProfileScreen() {
       localStorage.setItem('oldPasswords', JSON.stringify(newHistory));
 
       updatedFields.password = form.password;
+      isPasswordChanged = true; // ✅ Track password change
+    }
+
+    // ✅ Add seller fields if user is a seller
+    if (isSeller) {
+      updatedFields.seller = {
+        name: form.sellerName,
+        logo: form.sellerLogo,
+        description: form.sellerDescription,
+      };
     }
 
     try {
@@ -121,9 +158,19 @@ export default function ProfileScreen() {
         headers: { Authorization: `Bearer ${userInfo.token}` },
       });
       dispatch({ type: 'UPDATE_SUCCESS' });
-      ctxDispatch({ type: 'USER_SIGNIN', payload: data });
-      localStorage.setItem('userInfo', JSON.stringify(data));
-      toast.success('✅ Profile updated successfully');
+
+      if (isPasswordChanged) {
+        // ✅ If password updated → log out & redirect
+        toast.success('✅ Password changed successfully. Please log in again.');
+        ctxDispatch({ type: 'USER_SIGNOUT' });
+        localStorage.removeItem('userInfo');
+        navigate('/login');
+      } else {
+        // ✅ Otherwise → keep user logged in
+        ctxDispatch({ type: 'USER_SIGNIN', payload: data });
+        localStorage.setItem('userInfo', JSON.stringify(data));
+        toast.success('✅ Profile updated successfully');
+      }
 
       setValidated(false);
       setForm((prev) => ({
@@ -224,6 +271,59 @@ export default function ProfileScreen() {
                     </Form.Control.Feedback>
                   </Form.Group>
                 ))}
+
+                {/* ✅ Show seller fields if isSeller = true */}
+                {isSeller && (
+                  <>
+                    <hr />
+                    <h5 className="fw-bold text-primary mb-3">
+                      Seller Information
+                    </h5>
+
+                    <Form.Group className="mb-3" controlId="sellerName">
+                      <Form.Label className="fw-semibold">
+                        Seller Name
+                      </Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="sellerName"
+                        value={form.sellerName}
+                        placeholder="Enter your shop name"
+                        readOnly // ✅ Non-editable
+                        disabled // ✅ Prevent typing
+                      />
+                    </Form.Group>
+
+                    <Form.Group className="mb-3" controlId="sellerLogo">
+                      <Form.Label className="fw-semibold">
+                        Seller Logo URL
+                      </Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="sellerLogo"
+                        value={form.sellerLogo}
+                        placeholder="Enter your logo URL"
+                        readOnly // ✅ Non-editable
+                        disabled
+                      />
+                    </Form.Group>
+
+                    <Form.Group className="mb-3" controlId="sellerDescription">
+                      <Form.Label className="fw-semibold">
+                        Seller Description
+                      </Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={3}
+                        name="sellerDescription"
+                        value={form.sellerDescription}
+                        placeholder="Describe your business..."
+                        readOnly // ✅ Non-editable
+                        disabled
+                      />
+                    </Form.Group>
+                  </>
+                )}
 
                 <Form.Group className="mb-3" controlId="password">
                   <Form.Label className="fw-semibold">New Password</Form.Label>

@@ -17,6 +17,55 @@ userRouter.get(
   })
 );
 
+// Update own profile
+userRouter.put(
+  '/profile',
+  isAuth,
+  expressAsyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+      // ✅ Basic profile fields
+      user.name = req.body.name || user.name;
+      user.email = req.body.email || user.email;
+      user.phone = req.body.phone || user.phone;
+      user.address = req.body.address || user.address;
+      user.city = req.body.city || user.city;
+      user.state = req.body.state || user.state;
+      user.pinCode = req.body.pinCode || user.pinCode;
+
+      // ✅ Handle password update if provided
+      if (req.body.password) {
+        user.password = bcrypt.hashSync(req.body.password, 10);
+      }
+
+      // ✅ Handle seller fields if user is seller
+      if (user.isSeller && req.body.seller) {
+        user.seller = {
+          ...user.seller, // Preserve existing values
+          name: req.body.seller.name || user.seller.name,
+          logo: req.body.seller.logo || user.seller.logo,
+          description: req.body.seller.description || user.seller.description,
+        };
+      }
+
+      const updatedUser = await user.save();
+
+      res.send({
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        isAdmin: updatedUser.isAdmin,
+        isSeller: updatedUser.isSeller,
+        seller: updatedUser.seller,
+        token: req.user.token,
+      });
+    } else {
+      res.status(404).send({ message: 'User not found' });
+    }
+  })
+);
+
 userRouter.get(
   '/:id',
   isAuth,
@@ -25,36 +74,6 @@ userRouter.get(
     const user = await User.findById(req.params.id);
     if (user) {
       res.send(user);
-    } else {
-      res.status(404).send({ message: 'User Not Found' });
-    }
-  })
-);
-
-userRouter.put(
-  '/:id',
-  isAuth,
-  isAdmin,
-  expressAsyncHandler(async (req, res) => {
-    const user = await User.findById(req.params.id);
-    if (user) {
-      user.name = req.body.name || user.name;
-      user.email = req.body.email || user.email;
-      user.isAdmin =
-        req.body.isAdmin !== undefined
-          ? Boolean(req.body.isAdmin)
-          : user.isAdmin;
-      user.isSeller =
-        req.body.isSeller !== undefined
-          ? Boolean(req.body.isSeller)
-          : user.isSeller;
-
-      const updatedUser = await user.save();
-
-      res.send({
-        message: 'User Updated Successfully',
-        user: updatedUser,
-      });
     } else {
       res.status(404).send({ message: 'User Not Found' });
     }

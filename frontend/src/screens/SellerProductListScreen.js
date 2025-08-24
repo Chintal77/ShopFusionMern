@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useReducer, useState } from 'react';
+import React, { useContext, useEffect, useReducer } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Store } from '../Store';
@@ -49,7 +49,7 @@ export default function SellerProductListScreen() {
         dispatch({ type: 'FETCH_REQUEST' });
         const { data } = await axios.get('/api/products/seller', {
           headers: { Authorization: `Bearer ${userInfo.token}` },
-          params: { t: Date.now() }, // add timestamp to bypass cache
+          params: { t: Date.now() }, // bypass browser cache
         });
         dispatch({ type: 'FETCH_SUCCESS', payload: data });
       } catch (err) {
@@ -65,7 +65,7 @@ export default function SellerProductListScreen() {
   }, [userInfo, successDelete]);
 
   const deleteHandler = async (product) => {
-    if (window.confirm('Are you sure to delete?')) {
+    if (window.confirm(`Are you sure you want to delete "${product.name}"?`)) {
       try {
         dispatch({ type: 'DELETE_REQUEST' });
         await axios.delete(`/api/products/${product._id}`, {
@@ -83,6 +83,8 @@ export default function SellerProductListScreen() {
   return (
     <Container className="my-4">
       <h2 className="mb-4 text-center fw-bold">My Products</h2>
+
+      {loadingDelete && <LoadingBox />}
       {loading ? (
         <LoadingBox />
       ) : error ? (
@@ -92,12 +94,12 @@ export default function SellerProductListScreen() {
           <thead>
             <tr>
               <th>ID</th>
-              <th>NAME</th>
-              <th>PRICE</th>
-              <th>CATEGORY</th>
-              <th>STOCK</th>
-              <th>SELLER</th>
-              <th>ACTIONS</th>
+              <th>Name</th>
+              <th>Price</th>
+              <th>Category</th>
+              <th>Stock</th>
+              <th>Seller</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -105,7 +107,7 @@ export default function SellerProductListScreen() {
               <tr key={product._id}>
                 <td>{product._id}</td>
                 <td>{product.name}</td>
-                <td>${product.price}</td>
+                <td>₹{product.price}</td>
                 <td>{product.category}</td>
                 <td>{product.countInStock}</td>
                 <td>{product.seller || 'N/A'}</td>
@@ -113,16 +115,18 @@ export default function SellerProductListScreen() {
                   <Button
                     type="button"
                     variant="light"
+                    size="sm"
                     onClick={() => navigate(`/admin/product/${product._id}`)}
                   >
-                    Edit
+                    ✏️ Edit
                   </Button>{' '}
                   <Button
                     type="button"
                     variant="danger"
+                    size="sm"
                     onClick={() => deleteHandler(product)}
                   >
-                    Delete
+                    🗑️ Delete
                   </Button>
                 </td>
               </tr>
@@ -130,7 +134,6 @@ export default function SellerProductListScreen() {
           </tbody>
         </Table>
       )}
-      {loadingDelete && <LoadingBox />}
     </Container>
   );
 }

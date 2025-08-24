@@ -33,6 +33,8 @@ function LoginScreen() {
       // Redirect based on user type
       if (data.isAdmin) {
         navigate('/admin/dashboard');
+      } else if (data.isSeller) {
+        navigate('/seller/dashboard');
       } else {
         navigate('/');
       }
