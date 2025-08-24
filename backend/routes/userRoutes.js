@@ -106,18 +106,23 @@ userRouter.post(
 userRouter.post(
   '/signup',
   expressAsyncHandler(async (req, res) => {
+    const { name, email, password, isSeller } = req.body; // <--- get isSeller from request
+
     const newUser = new User({
-      name: req.body.name,
-      email: req.body.email,
-      password: bcrypt.hashSync(req.body.password),
+      name,
+      email,
+      password: bcrypt.hashSync(password),
+      isSeller: isSeller || false, // <--- save seller status
     });
+
     const user = await newUser.save();
+
     res.send({
       _id: user._id,
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
-      isSeller: user.isSeller,
+      isSeller: user.isSeller, // <--- will now reflect checkbox
       token: generateToken(user),
     });
   })

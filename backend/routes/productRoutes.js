@@ -89,9 +89,11 @@ productRouter.post(
   isAuth,
   isSellerOrAdmin,
   expressAsyncHandler(async (req, res) => {
+    const isAdminAdding = req.user.isAdmin;
+
     const newProduct = new Product({
       name: 'Sample Product ' + Date.now(),
-      seller: req.user._id,
+      seller: isAdminAdding ? null : req.user._id, // seller null if admin adds
       slug: 'sample-product-' + Date.now(),
       image: '/images/p4.jpg',
       price: 999,
@@ -101,10 +103,8 @@ productRouter.post(
       rating: 4.5,
       numReviews: 10,
       description: 'This is a sample product used for testing and development.',
-
-      // Additional fields from extended schema
       badge: 'Best Seller',
-      seller: 'ShopFusion',
+      addedByAdmin: isAdminAdding, // true if admin adds
       delivery: 'Free delivery within 3–5 days',
       returnPolicy: '7-day return applicable',
       highlights: ['High quality', 'Comfortable', 'Stylish'],

@@ -17,6 +17,7 @@ export default function SignupScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSeller, setIsSeller] = useState(false); // <--- added state
 
   const { state, dispatch: ctxDispatch } = useContext(Store);
   const { userInfo } = state;
@@ -32,10 +33,17 @@ export default function SignupScreen() {
         name,
         email,
         password,
+        isSeller, // <--- send seller status to backend
       });
       ctxDispatch({ type: 'USER_SIGNIN', payload: data });
       localStorage.setItem('userInfo', JSON.stringify(data));
-      navigate(redirect || '/');
+
+      // Navigate based on seller status
+      if (isSeller) {
+        navigate('/seller/dashboard');
+      } else {
+        navigate(redirect || '/');
+      }
     } catch (err) {
       toast.error(getError(err));
     }
@@ -89,6 +97,17 @@ export default function SignupScreen() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
+
+          {/* Seller Checkbox */}
+          <div className="form-check">
+            <input
+              type="checkbox"
+              id="sellerCheckbox"
+              checked={isSeller}
+              onChange={(e) => setIsSeller(e.target.checked)}
+            />
+            <label htmlFor="sellerCheckbox">Sign up as a Seller</label>
+          </div>
 
           <button className="btn-submit" type="submit">
             Sign Up

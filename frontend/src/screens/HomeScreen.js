@@ -210,11 +210,19 @@ function HomeScreen({ cartItems, setCartItems }) {
                   key={product.slug}
                 >
                   <div className="card h-100 shadow-sm position-relative border-0 hover-shadow transition">
+                    {/* Existing Badge */}
                     {product.badge && (
                       <span className="badge bg-danger position-absolute top-0 start-0 m-2 rounded-pill shadow">
                         {typeof product.badge === 'string'
                           ? product.badge
                           : `${product.badge}% OFF`}
+                      </span>
+                    )}
+
+                    {/* Added by Admin Badge (offset a bit so it doesn't overlap) */}
+                    {product.addedByAdmin && (
+                      <span className="badge bg-info position-absolute top-0 start-50 translate-middle-x m-2 rounded-pill shadow">
+                        Added by Admin
                       </span>
                     )}
 

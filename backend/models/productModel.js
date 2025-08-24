@@ -14,21 +14,20 @@ const reviewSchema = new mongoose.Schema(
 const productSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    seller: { type: mongoose.Schema.Types.ObjectID, ref: 'User' },
     slug: { type: String, required: true, unique: true },
-    category: { type: String, required: true },
-    image: { type: String, required: true },
-    images: [String],
+    seller: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // seller ID, optional if admin adds
     price: { type: Number, required: true },
-    countInStock: { type: Number, required: true },
+    image: { type: String, required: true },
+    category: { type: String, required: true },
     brand: { type: String, required: true },
-    rating: { type: Number, required: true },
-    numReviews: { type: Number, required: true },
-    reviews: [reviewSchema],
+    countInStock: { type: Number, required: true },
+    rating: { type: Number, default: 0 },
+    numReviews: { type: Number, default: 0 },
     description: { type: String, required: true },
 
+    // Additional fields
     badge: { type: String },
-    seller: { type: String },
+    addedByAdmin: { type: Boolean, default: false }, // <-- new field
     delivery: { type: String },
     returnPolicy: { type: String },
     highlights: [{ type: String }],
