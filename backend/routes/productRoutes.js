@@ -149,7 +149,6 @@ productRouter.put(
 
       // Optional fields
       product.badge = req.body.badge || '';
-      product.seller = req.body.seller || '';
       product.delivery = req.body.delivery || '';
       product.returnPolicy = req.body.returnPolicy || '';
       product.highlights = req.body.highlights || [];

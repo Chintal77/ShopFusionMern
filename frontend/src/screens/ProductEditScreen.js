@@ -405,16 +405,6 @@ export default function ProductEditScreen() {
                   />
                 </Form.Group>
               </Col>
-              <Col md={6}>
-                <Form.Group controlId="seller">
-                  <Form.Label>Seller</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={seller}
-                    onChange={(e) => setSeller(e.target.value)}
-                  />
-                </Form.Group>
-              </Col>
             </Row>
 
             <Row className="gy-3 mt-2">
