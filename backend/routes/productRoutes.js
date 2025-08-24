@@ -17,10 +17,12 @@ productRouter.get(
 
 productRouter.get(
   '/seller',
+  isAuth,
   expressAsyncHandler(async (req, res) => {
+    res.set('Cache-Control', 'no-store'); // prevent caching
     const seller = req.user._id; // user ID from auth middleware
     const products = await Product.find({ seller });
-    res.send({ products });
+    res.send(products); // send the array directly
   })
 );
 
