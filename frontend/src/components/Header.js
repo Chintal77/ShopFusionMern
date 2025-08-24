@@ -20,6 +20,13 @@ function Header() {
   const updateCartCount = () => {
     const storedUser = localStorage.getItem('userInfo');
     const user = storedUser ? JSON.parse(storedUser) : null;
+
+    // ✅ Fix: Ensure isAdmin & isSeller are always booleans
+    if (user) {
+      user.isAdmin = user.isAdmin === true || user.isAdmin === 'true';
+      user.isSeller = user.isSeller === true || user.isSeller === 'true';
+    }
+
     setUserInfo(user);
 
     if (user) {
@@ -64,8 +71,8 @@ function Header() {
 
   return (
     <>
-      {/* Sidebar (Only for non-admin and not on login page) */}
-      {!isLoginPage && !userInfo?.isAdmin && (
+      {/* Sidebar */}
+      {!isLoginPage && !userInfo?.isAdmin && !userInfo?.isSeller && (
         <div
           className={`position-fixed top-0 start-0 bg-light shadow-lg h-100 p-3 transition ${
             sidebarIsOpen ? 'd-block' : 'd-none'
@@ -100,9 +107,9 @@ function Header() {
       {/* Header */}
       <header className="bg-dark py-3 px-4 text-white">
         <div className="container-fluid d-flex justify-content-between align-items-center">
-          {/* Left: Sidebar Toggle + Logo */}
+          {/* Left: Sidebar + Logo */}
           <div className="d-flex align-items-center gap-3">
-            {!isLoginPage && !userInfo?.isAdmin && (
+            {!isLoginPage && !userInfo?.isAdmin && !userInfo?.isSeller && (
               <button
                 className="btn btn-outline-light"
                 onClick={() => setSidebarIsOpen(true)}
@@ -122,14 +129,16 @@ function Header() {
             )}
           </div>
 
-          {/* Middle: SearchBox */}
+          {/* Middle: Search */}
           <div className="mx-auto">
-            {!isLoginPage && !userInfo?.isAdmin && <SearchBox />}
+            {!isLoginPage && !userInfo?.isAdmin && !userInfo?.isSeller && (
+              <SearchBox />
+            )}
           </div>
 
           {/* Right: Cart + User */}
           <div className="d-flex align-items-center gap-4">
-            {userInfo && !userInfo?.isAdmin && (
+            {!isLoginPage && !userInfo?.isAdmin && !userInfo?.isSeller && (
               <Link
                 to="/cart"
                 className="text-white text-decoration-none position-relative"
@@ -160,7 +169,7 @@ function Header() {
                   data-bs-toggle="dropdown"
                   aria-expanded="false"
                 >
-                  {userInfo.isAdmin ? '👑' : '👋'}{' '}
+                  {userInfo.isAdmin ? '👑' : userInfo.isSeller ? '🏪' : '👋'}{' '}
                   <small>{userInfo.name}</small>
                 </button>
                 <ul
@@ -198,7 +207,26 @@ function Header() {
                           className="dropdown-item"
                           onClick={() => navigate('/admin/users')}
                         >
-                          📜 Users
+                          👥 Manage Users
+                        </button>
+                      </li>
+                    </>
+                  ) : userInfo.isSeller ? (
+                    <>
+                      <li>
+                        <button
+                          className="dropdown-item"
+                          onClick={() => navigate('/seller/products')}
+                        >
+                          📦 My Products
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          className="dropdown-item"
+                          onClick={() => navigate('/seller/orders')}
+                        >
+                          📜 My Orders
                         </button>
                       </li>
                     </>
@@ -214,6 +242,7 @@ function Header() {
                       </li>
                     </>
                   )}
+
                   <li>
                     <button
                       className="dropdown-item"

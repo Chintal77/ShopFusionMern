@@ -1,34 +1,43 @@
 import './App.css';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import HomeScreen from './screens/HomeScreen';
+import { useState, useEffect, useContext } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'react-toastify/dist/ReactToastify.css';
+import 'react-confirm-alert/src/react-confirm-alert.css';
+
+import HomeScreen from './screens/HomeScreen';
 import ProductScreen from './screens/ProductScreen';
 import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
 import CartScreen from './screens/CartScreen';
 import CheckoutScreen from './screens/CheckoutScreen';
-import Header from './components/Header'; // ✅ import Header
-
+import Header from './components/Header';
 import OrderSuccessScreen from './screens/OrderSuccessScreen';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import PaymentMethodScreen from './screens/PaymentMethodScreen';
 import OrderScreen from './screens/MyOrdersScreen';
 import OrderHistoryScreen from './screens/OrderHistory';
 import ProfileScreen from './screens/ProfileScreen';
 import SearchScreen from './screens/SearchScreen';
-import AdminRoute from './components/AdminRoute';
 import DashboardScreen from './screens/DashBoardScreen';
 import ProductListScreen from './screens/ProductListScreen';
-import 'react-confirm-alert/src/react-confirm-alert.css';
 import ProductEditScreen from './screens/ProductEditScreen';
 import OrderListScreen from './screens/OrderListScreen';
 import UserListScreen from './screens/UserListScreen';
 import UserEditScreen from './screens/UserEditScreen';
 import AiChat from './components/AiChat';
 
+import { Store } from './Store';
+import AdminRoute from './components/AdminRoute';
+import SellerRoute from './components/SellerRoute';
+import ProtectedRoute from './components/ProtectedRoute'; // customer route
+
+import { ToastContainer } from 'react-toastify';
+import AuthenticatedRoute from './components/AuthenticatedRoute';
+
 function App() {
+  const { state } = useContext(Store);
+  const { userInfo } = state;
+
   const [cartItems, setCartItems] = useState(() => {
     const saved = localStorage.getItem('cartItems');
     return saved ? JSON.parse(saved) : {};
@@ -60,6 +69,7 @@ function App() {
         <Header cartItems={cartItems} />
         <main className="main-content">
           <Routes>
+            {/* Public Routes */}
             <Route
               path="/"
               element={
@@ -77,33 +87,73 @@ function App() {
             />
             <Route path="/login" element={<LoginScreen />} />
             <Route path="/signup" element={<SignupScreen />} />
-            <Route path="/payment" element={<PaymentMethodScreen />} />
+            <Route path="/search" element={<SearchScreen />} />
+
+            {/* Customer Routes */}
             <Route
               path="/cart"
               element={
-                <CartScreen cartItems={cartItems} setCartItems={setCartItems} />
+                <ProtectedRoute>
+                  <CartScreen
+                    cartItems={cartItems}
+                    setCartItems={setCartItems}
+                  />
+                </ProtectedRoute>
               }
             />
             <Route
               path="/checkout"
               element={
-                <CheckoutScreen
-                  cartItems={cartItems}
-                  setCartItems={setCartItems}
-                />
+                <ProtectedRoute>
+                  <CheckoutScreen
+                    cartItems={cartItems}
+                    setCartItems={setCartItems}
+                  />
+                </ProtectedRoute>
               }
             />
-            <Route path="/order/:id" element={<OrderScreen />}></Route>
-            <Route path="/order-success" element={<OrderSuccessScreen />} />
-            <Route path="/profile" element={<ProfileScreen />} />
-            <Route path="/search" element={<SearchScreen />} />
-
+            <Route
+              path="/payment"
+              element={
+                <ProtectedRoute>
+                  <PaymentMethodScreen />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/order/:id"
+              element={
+                <ProtectedRoute>
+                  <OrderScreen />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/order-success"
+              element={
+                <ProtectedRoute>
+                  <OrderSuccessScreen />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <AuthenticatedRoute>
+                  <ProfileScreen />
+                </AuthenticatedRoute>
+              }
+            />
             <Route
               path="/orderhistory"
-              element={<OrderHistoryScreen />}
-            ></Route>
+              element={
+                <ProtectedRoute>
+                  <OrderHistoryScreen />
+                </ProtectedRoute>
+              }
+            />
 
-            {}
+            {/* Admin Routes */}
             <Route
               path="/admin/dashboard"
               element={
@@ -111,8 +161,7 @@ function App() {
                   <DashboardScreen />
                 </AdminRoute>
               }
-            ></Route>
-
+            />
             <Route
               path="/admin/products"
               element={
@@ -120,8 +169,7 @@ function App() {
                   <ProductListScreen />
                 </AdminRoute>
               }
-            ></Route>
-
+            />
             <Route
               path="/admin/orders"
               element={
@@ -129,8 +177,7 @@ function App() {
                   <OrderListScreen />
                 </AdminRoute>
               }
-            ></Route>
-
+            />
             <Route
               path="/admin/product/:id"
               element={
@@ -138,8 +185,7 @@ function App() {
                   <ProductEditScreen />
                 </AdminRoute>
               }
-            ></Route>
-
+            />
             <Route
               path="/admin/users"
               element={
@@ -147,8 +193,7 @@ function App() {
                   <UserListScreen />
                 </AdminRoute>
               }
-            ></Route>
-
+            />
             <Route
               path="/admin/user/:id"
               element={
@@ -156,13 +201,23 @@ function App() {
                   <UserEditScreen />
                 </AdminRoute>
               }
-            ></Route>
+            />
+
+            {/* Seller Routes */}
+            <Route
+              path="/seller/dashboard"
+              element={
+                <SellerRoute>
+                  <div>Seller Dashboard</div>
+                  {/* Replace with SellerDashboardScreen if exists */}
+                </SellerRoute>
+              }
+            />
           </Routes>
 
-          <div>
-            <AiChat />
-          </div>
+          <AiChat />
         </main>
+
         <footer className="footer">
           &copy; {new Date().getFullYear()} ShopFusion. All rights reserved.
         </footer>
