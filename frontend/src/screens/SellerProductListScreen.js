@@ -9,6 +9,8 @@ import Button from 'react-bootstrap/Button';
 import LoadingBox from '../components/LoadingBox';
 import MessageBox from '../components/MessageBox';
 import { toast } from 'react-toastify';
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -26,6 +28,12 @@ const reducer = (state, action) => {
       return { ...state, loadingDelete: false };
     case 'DELETE_RESET':
       return { ...state, loadingDelete: false, successDelete: false };
+    case 'CREATE_REQUEST':
+      return { ...state, loadingCreate: true };
+    case 'CREATE_SUCCESS':
+      return { ...state, loadingCreate: false };
+    case 'CREATE_FAIL':
+      return { ...state, loadingCreate: false };
     default:
       return state;
   }
@@ -49,7 +57,7 @@ export default function SellerProductListScreen() {
         dispatch({ type: 'FETCH_REQUEST' });
         const { data } = await axios.get('/api/products/seller', {
           headers: { Authorization: `Bearer ${userInfo.token}` },
-          params: { t: Date.now() }, // bypass browser cache
+          params: { t: Date.now() }, // Avoid caching
         });
         dispatch({ type: 'FETCH_SUCCESS', payload: data });
       } catch (err) {
@@ -64,25 +72,88 @@ export default function SellerProductListScreen() {
     }
   }, [userInfo, successDelete]);
 
-  const deleteHandler = async (product) => {
-    if (window.confirm(`Are you sure you want to delete "${product.name}"?`)) {
-      try {
-        dispatch({ type: 'DELETE_REQUEST' });
-        await axios.delete(`/api/products/${product._id}`, {
-          headers: { Authorization: `Bearer ${userInfo.token}` },
-        });
-        toast.success('Product deleted successfully');
-        dispatch({ type: 'DELETE_SUCCESS' });
-      } catch (err) {
-        toast.error(getError(err));
-        dispatch({ type: 'DELETE_FAIL' });
-      }
-    }
+  // ✅ Create Product Handler
+  const createHandler = () => {
+    confirmAlert({
+      title: 'Confirm to proceed',
+      message: 'Are you sure you want to create this product?',
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: async () => {
+            try {
+              dispatch({ type: 'CREATE_REQUEST' });
+              const { data } = await axios.post(
+                '/api/products',
+                {},
+                {
+                  headers: { Authorization: `Bearer ${userInfo.token}` },
+                }
+              );
+              toast.success('Product created successfully');
+              dispatch({ type: 'CREATE_SUCCESS' });
+              navigate(`/admin/product/${data.product._id}`);
+            } catch (err) {
+              toast.error(getError(err));
+              dispatch({ type: 'CREATE_FAIL' });
+            }
+          },
+        },
+        {
+          label: 'No',
+          onClick: () => {
+            toast.info('Product creation cancelled');
+          },
+        },
+      ],
+    });
+  };
+
+  // ✅ Updated Delete Handler with confirmAlert
+  const deleteHandler = (product) => {
+    confirmAlert({
+      title: 'Confirm Delete',
+      message: `Are you sure you want to delete "${product.name}"?`,
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: async () => {
+            try {
+              dispatch({ type: 'DELETE_REQUEST' });
+              await axios.delete(`/api/products/${product._id}`, {
+                headers: { Authorization: `Bearer ${userInfo.token}` },
+              });
+              toast.success('Product deleted successfully');
+              dispatch({ type: 'DELETE_SUCCESS' });
+            } catch (err) {
+              toast.error(getError(err));
+              dispatch({ type: 'DELETE_FAIL' });
+            }
+          },
+        },
+        {
+          label: 'No',
+          onClick: () => {
+            toast.info('Product deletion cancelled');
+          },
+        },
+      ],
+    });
   };
 
   return (
     <Container className="my-4">
-      <h2 className="mb-4 text-center fw-bold">My Products</h2>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h2 className="fw-bold">My Products</h2>
+        <Button
+          type="button"
+          onClick={createHandler}
+          variant="success"
+          className="shadow-sm"
+        >
+          ➕ Create Product
+        </Button>
+      </div>
 
       {loadingDelete && <LoadingBox />}
       {loading ? (

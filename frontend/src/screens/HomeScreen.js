@@ -237,11 +237,15 @@ function HomeScreen({ cartItems, setCartItems }) {
                       </h5>
 
                       {/* Unique "Added by Admin" Ribbon */}
-                      {product.addedByAdmin && (
-                        <div className="admin-ribbon">
-                          <span>Added by Admin</span>
-                        </div>
-                      )}
+                      {product.addedByAdmin ? (
+                        <span style={{ color: '#007bff', fontWeight: '600' }}>
+                          Added by Admin
+                        </span>
+                      ) : product.seller ? (
+                        <span style={{ color: '#28a745', fontWeight: '600' }}>
+                          Added by Seller
+                        </span>
+                      ) : null}
 
                       <p className="mb-1">
                         <span className="text-muted text-decoration-line-through me-2">

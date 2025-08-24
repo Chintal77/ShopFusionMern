@@ -18,6 +18,7 @@ const productSchema = new mongoose.Schema(
     seller: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // seller ID, optional if admin adds
     price: { type: Number, required: true },
     image: { type: String, required: true },
+    images: { type: [String], default: [] },
     category: { type: String, required: true },
     brand: { type: String, required: true },
     countInStock: { type: Number, required: true },
@@ -28,6 +29,7 @@ const productSchema = new mongoose.Schema(
     // Additional fields
     badge: { type: String },
     addedByAdmin: { type: Boolean, default: false }, // <-- new field
+    addedBySeller: { type: Boolean, default: false },
     delivery: { type: String },
     returnPolicy: { type: String },
     highlights: [{ type: String }],

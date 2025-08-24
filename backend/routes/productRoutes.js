@@ -92,12 +92,14 @@ productRouter.post(
   isSellerOrAdmin,
   expressAsyncHandler(async (req, res) => {
     const isAdminAdding = req.user.isAdmin;
+    const isSellerAdding = req.user.isSeller;
 
     const newProduct = new Product({
       name: 'Sample Product ' + Date.now(),
       seller: isAdminAdding ? null : req.user._id, // seller null if admin adds
       slug: 'sample-product-' + Date.now(),
       image: '/images/p4.jpg',
+      images: [], // ✅ Added this
       price: 999,
       category: 'Sample Category',
       brand: 'Sample Brand',
@@ -106,7 +108,8 @@ productRouter.post(
       numReviews: 10,
       description: 'This is a sample product used for testing and development.',
       badge: 'Best Seller',
-      addedByAdmin: isAdminAdding, // true if admin adds
+      addedByAdmin: isAdminAdding,
+      addedBySeller: isSellerAdding,
       delivery: 'Free delivery within 3–5 days',
       returnPolicy: '7-day return applicable',
       highlights: ['High quality', 'Comfortable', 'Stylish'],
@@ -178,14 +181,26 @@ productRouter.put(
 productRouter.delete(
   '/:id',
   isAuth,
-  isAdmin,
+  isSellerOrAdmin, // ✅ Allow Admin OR Seller
   expressAsyncHandler(async (req, res) => {
-    const deletedProduct = await Product.findByIdAndDelete(req.params.id);
-    if (deletedProduct) {
-      res.send({ message: 'Product Deleted' });
-    } else {
-      res.status(404).send({ message: 'Product Not Found' });
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).send({ message: 'Product Not Found' });
     }
+
+    // ✅ If the logged-in user is a seller, ensure they own the product
+    if (req.user.isSeller && !req.user.isAdmin) {
+      if (product.seller.toString() !== req.user._id.toString()) {
+        return res
+          .status(403)
+          .send({ message: 'You are not allowed to delete this product' });
+      }
+    }
+
+    // ✅ Delete the product safely
+    await Product.findByIdAndDelete(req.params.id);
+    res.send({ message: 'Product Deleted Successfully' });
   })
 );
 

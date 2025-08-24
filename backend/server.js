@@ -9,6 +9,7 @@ import orderRouter from './routes/orderRoutes.js';
 import uploadRouter from './routes/uploadRoutes.js';
 import router from './routes/paytmRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
+import sellerRouter from './routes/sellerRoutes.js';
 import cors from 'cors';
 
 dotenv.config();
@@ -41,6 +42,7 @@ app.use('/api/orders', orderRouter);
 app.use('/api/upload', uploadRouter);
 app.use('/api/paytm', router);
 app.use('/api/ai', aiRoutes);
+app.use('/api/sellers', sellerRouter);
 
 // Route to get a single product by slug
 app.get('/api/products/:slug', (req, res) => {
