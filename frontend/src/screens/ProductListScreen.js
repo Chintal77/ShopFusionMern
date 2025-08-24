@@ -167,6 +167,38 @@ export default function ProductListScreen() {
     });
   };
 
+  const deleteAllHandler = () => {
+    confirmAlert({
+      title: '⚠️ Confirm Delete All',
+      message:
+        'Are you sure you want to delete ALL products? This action cannot be undone.',
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: async () => {
+            try {
+              dispatch({ type: 'DELETE_REQUEST' });
+              await axios.delete('/api/products/delete-all', {
+                headers: { Authorization: `Bearer ${userInfo.token}` },
+              });
+              toast.success('All products deleted successfully');
+              dispatch({ type: 'DELETE_SUCCESS' });
+            } catch (err) {
+              toast.error(getError(err));
+              dispatch({ type: 'DELETE_FAIL' });
+            }
+          },
+        },
+        {
+          label: 'No',
+          onClick: () => {
+            toast.info('Bulk deletion cancelled');
+          },
+        },
+      ],
+    });
+  };
+
   return (
     <div className="container my-5">
       {loadingCreate && <LoadingBox />}
@@ -206,18 +238,27 @@ export default function ProductListScreen() {
                         <th scope="col">💰 Price</th>
                         <th scope="col">📂 Category</th>
                         <th scope="col">🏷️ Brand</th>
+                        <th scope="col">👤 Added By</th>
                         <th scope="col">⚙️ Action</th>
                         <th scope="col">⚙️ Delete</th>
+                        <th scope="col">🧹 Delete All</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {products.map((product) => (
+                      {products.map((product, index) => (
                         <tr key={product._id}>
                           <td className="text-muted small">{product._id}</td>
                           <td className="fw-semibold">{product.name}</td>
                           <td className="text-success">₹{product.price}</td>
                           <td>{product.category}</td>
                           <td>{product.brand}</td>
+                          <td>
+                            {product.addedByAdmin
+                              ? 'Admin'
+                              : product.addedBySeller
+                              ? 'Seller'
+                              : 'Unknown'}
+                          </td>
                           <td>
                             <Button
                               variant="outline-primary"
@@ -239,6 +280,23 @@ export default function ProductListScreen() {
                               🗑️ Delete
                             </Button>
                           </td>
+
+                          {/* Show Delete All Button in First Row Only */}
+                          {index === 0 ? (
+                            <td
+                              rowSpan={products.length}
+                              className="align-middle"
+                            >
+                              <Button
+                                type="button"
+                                variant="warning"
+                                size="sm"
+                                onClick={deleteAllHandler}
+                              >
+                                🧹 Delete All
+                              </Button>
+                            </td>
+                          ) : null}
                         </tr>
                       ))}
                     </tbody>

@@ -178,6 +178,15 @@ productRouter.put(
   })
 );
 
+productRouter.delete('/delete-all', isAuth, isAdmin, async (req, res) => {
+  try {
+    await Product.deleteMany({});
+    res.status(200).send({ message: 'All products deleted successfully' });
+  } catch (error) {
+    res.status(500).send({ message: 'Failed to delete products', error });
+  }
+});
+
 productRouter.delete(
   '/:id',
   isAuth,
