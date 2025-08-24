@@ -15,6 +15,7 @@ import {
   returnRequestEmailTemplate,
   returnApprovedEmailTemplate,
   refundCreditedEmailTemplate,
+  isSellerOrAdmin,
 } from '../utils.js';
 import mongoose from 'mongoose';
 
@@ -25,9 +26,15 @@ const orderRouter = express.Router();
 orderRouter.get(
   '/',
   isAuth,
-  isAdmin,
+  isSellerOrAdmin,
   expressAsyncHandler(async (req, res) => {
-    const orders = await Order.find().populate('user', 'name');
+    const seller = req.query.seller || '';
+    const sellerFilter = seller ? { seller } : {};
+
+    const orders = await Order.find({ ...sellerFilter }).populate(
+      'user',
+      'name'
+    );
     res.send(orders);
   })
 );
@@ -64,6 +71,7 @@ orderRouter.post(
     );
 
     const newOrder = new Order({
+      seller: req.body.orderItems[0].seller,
       orderItems: orderItemsWithObjectIds,
       shippingAddress,
       paymentMethod,

@@ -1,14 +1,28 @@
 import express from 'express';
 import Product from '../models/productModel.js';
 import expressAsyncHandler from 'express-async-handler';
-import { isAdmin, isAuth } from '../utils.js';
+import { isAdmin, isAuth, isSellerOrAdmin } from '../utils.js';
 
 const productRouter = express.Router();
 
-productRouter.get('/', async (req, res) => {
-  const products = await Product.find();
-  res.send(products);
-});
+productRouter.get(
+  '/',
+  expressAsyncHandler(async (req, res) => {
+    const seller = req.query.seller || '';
+    const sellerFilter = seller ? { seller } : {};
+    const products = await Product.find({ ...sellerFilter });
+    res.send(products);
+  })
+);
+
+productRouter.get(
+  '/seller',
+  expressAsyncHandler(async (req, res) => {
+    const seller = req.user._id; // user ID from auth middleware
+    const products = await Product.find({ seller });
+    res.send({ products });
+  })
+);
 
 productRouter.post(
   '/:id/reviews',
@@ -73,10 +87,11 @@ productRouter.get(
 productRouter.post(
   '/',
   isAuth,
-  isAdmin,
+  isSellerOrAdmin,
   expressAsyncHandler(async (req, res) => {
     const newProduct = new Product({
       name: 'Sample Product ' + Date.now(),
+      seller: req.user._id,
       slug: 'sample-product-' + Date.now(),
       image: '/images/p4.jpg',
       price: 999,
@@ -113,7 +128,7 @@ productRouter.post(
 productRouter.put(
   '/:id',
   isAuth,
-  isAdmin,
+  isSellerOrAdmin,
   expressAsyncHandler(async (req, res) => {
     const productId = req.params.id;
     const product = await Product.findById(productId);

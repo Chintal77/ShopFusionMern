@@ -33,6 +33,7 @@ import ProtectedRoute from './components/ProtectedRoute'; // customer route
 
 import { ToastContainer } from 'react-toastify';
 import AuthenticatedRoute from './components/AuthenticatedRoute';
+import SellerProductListScreen from './screens/SellerProductListScreen';
 
 function App() {
   const { state } = useContext(Store);
@@ -205,11 +206,10 @@ function App() {
 
             {/* Seller Routes */}
             <Route
-              path="/seller/dashboard"
+              path="/seller/products"
               element={
                 <SellerRoute>
-                  <div>Seller Dashboard</div>
-                  {/* Replace with SellerDashboardScreen if exists */}
+                  <SellerProductListScreen />
                 </SellerRoute>
               }
             />
