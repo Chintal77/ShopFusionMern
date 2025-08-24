@@ -59,7 +59,7 @@ function ProductScreen({ cartItems, setCartItems }) {
   // Reducer state
   const [{ loading, error, product, loadingCreateReview }, dispatch] =
     useReducer(reducer, {
-      product: [],
+      product: { reviews: [], images: [], highlights: [] }, // ✅ Default safe arrays
       loading: true,
       error: '',
     });
@@ -70,7 +70,15 @@ function ProductScreen({ cartItems, setCartItems }) {
       dispatch({ type: 'FETCH_REQUEST' });
       try {
         const result = await axios.get(`/api/products/${slug}`);
-        dispatch({ type: 'FETCH_SUCCESS', payload: result.data });
+        dispatch({
+          type: 'FETCH_SUCCESS',
+          payload: {
+            ...result.data,
+            reviews: result.data.reviews || [],
+            images: result.data.images || [],
+            highlights: result.data.highlights || [],
+          },
+        });
       } catch (err) {
         dispatch({ type: 'FETCH_FAIL', payload: err.message });
       }
@@ -171,9 +179,7 @@ function ProductScreen({ cartItems, setCartItems }) {
   const finalPrice = product.price - discountAmount;
 
   // ------------------ Render ------------------
-  if (loading) {
-    return <LoadingBox />;
-  }
+  if (loading) return <LoadingBox />;
 
   if (error) {
     return (
@@ -223,25 +229,13 @@ function ProductScreen({ cartItems, setCartItems }) {
                   e.target.src = '/images/broken.png';
                 }}
               />
-
-              {/* Overlay Zoom Icon */}
-              <div
-                className="position-absolute top-50 start-50 translate-middle bg-dark bg-opacity-50 text-white px-3 py-2 rounded-circle"
-                style={{
-                  opacity: 0,
-                  transition: 'opacity 0.3s ease',
-                  pointerEvents: 'none',
-                }}
-              >
-                🔍
-              </div>
             </div>
 
             {/* Thumbnail Gallery */}
             <div className="mt-4">
               <Row xs={4} className="g-3 justify-content-center">
-                {[product.image, ...product.images].map((x) => (
-                  <Col key={x}>
+                {[product.image, ...(product.images || [])].map((x, index) => (
+                  <Col key={index}>
                     <Card
                       className={`border-3 shadow-sm ${
                         selectedImage === x ? 'border-primary' : 'border-light'
@@ -304,17 +298,18 @@ function ProductScreen({ cartItems, setCartItems }) {
 
             {/* Tabs for Details */}
             <Tabs defaultActiveKey="highlights" className="mb-3">
-              {product.highlights?.length > 0 && (
-                <Tab eventKey="highlights" title="Highlights">
-                  <ul className="list-group list-group-flush">
-                    {product.highlights.map((point, index) => (
-                      <li key={index} className="list-group-item">
-                        {point}
-                      </li>
-                    ))}
-                  </ul>
-                </Tab>
-              )}
+              {Array.isArray(product.highlights) &&
+                product.highlights.length > 0 && (
+                  <Tab eventKey="highlights" title="Highlights">
+                    <ul className="list-group list-group-flush">
+                      {product.highlights.map((point, index) => (
+                        <li key={index} className="list-group-item">
+                          {point}
+                        </li>
+                      ))}
+                    </ul>
+                  </Tab>
+                )}
               {product.specifications && (
                 <Tab eventKey="specs" title="Specifications">
                   <table className="table table-striped">
@@ -348,12 +343,10 @@ function ProductScreen({ cartItems, setCartItems }) {
                         month: 'short',
                       });
 
-                    // start after 2 days
                     const startDateObj = new Date(today);
                     startDateObj.setDate(today.getDate() + 2);
                     const startDate = formatDate(startDateObj);
 
-                    // end after 7 days
                     const endDateObj = new Date(today);
                     endDateObj.setDate(today.getDate() + 7);
                     const endDate = formatDate(endDateObj);
@@ -406,7 +399,7 @@ function ProductScreen({ cartItems, setCartItems }) {
         </h2>
 
         {/* If no review */}
-        {product.reviews.length === 0 && (
+        {(product.reviews || []).length === 0 && (
           <MessageBox variant="info">
             No reviews yet. Be the first to review!
           </MessageBox>
@@ -414,7 +407,7 @@ function ProductScreen({ cartItems, setCartItems }) {
 
         {/* Reviews List */}
         <ListGroup variant="flush" className="mb-4">
-          {product.reviews.map((review) => (
+          {(product.reviews || []).map((review) => (
             <ListGroup.Item key={review._id} className="shadow-sm rounded mb-3">
               <div className="d-flex justify-content-between align-items-center">
                 <h6 className="fw-bold text-primary">{review.name}</h6>
