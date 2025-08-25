@@ -71,7 +71,6 @@ orderRouter.post(
     );
 
     const newOrder = new Order({
-      seller: req.body.orderItems[0].seller,
       orderItems: orderItemsWithObjectIds,
       shippingAddress,
       paymentMethod,
@@ -392,6 +391,16 @@ orderRouter.put(
     } else {
       res.status(404).send({ message: 'Order Not Found' });
     }
+  })
+);
+
+orderRouter.delete(
+  '/all',
+  isAuth,
+  isAdmin,
+  expressAsyncHandler(async (req, res) => {
+    const result = await Order.deleteMany({});
+    res.send({ message: `Deleted ${result.deletedCount} orders` });
   })
 );
 

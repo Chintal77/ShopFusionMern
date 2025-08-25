@@ -97,12 +97,33 @@ export default function OrderListScreen() {
             }
           },
         },
+        { label: 'No', onClick: () => toast.info('Order deletion cancelled') },
+      ],
+    });
+  };
+
+  const deleteAllHandler = () => {
+    confirmAlert({
+      title: 'Confirm Delete All',
+      message: 'Are you sure you want to delete all orders?',
+      buttons: [
         {
-          label: 'No',
-          onClick: () => {
-            toast.info('Order deletion cancelled');
+          label: 'Yes',
+          onClick: async () => {
+            try {
+              dispatch({ type: 'DELETE_REQUEST' });
+              await axios.delete('/api/orders/all', {
+                headers: { Authorization: `Bearer ${userInfo.token}` },
+              });
+              toast.success('All orders deleted successfully');
+              dispatch({ type: 'DELETE_SUCCESS' });
+            } catch (err) {
+              toast.error(getError(err));
+              dispatch({ type: 'DELETE_FAIL' });
+            }
           },
         },
+        { label: 'No', onClick: () => toast.info('Deletion cancelled') },
       ],
     });
   };
@@ -151,9 +172,7 @@ export default function OrderListScreen() {
   const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
 
   const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
 
   return (
@@ -161,11 +180,11 @@ export default function OrderListScreen() {
       <Helmet>
         <title>🧾 Admin | Orders</title>
       </Helmet>
+
       {loadingDelete && <LoadingBox />}
 
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="text-primary fw-bold">📦 Order Management</h2>
-        <h5 className="text-success">Total Refunds: {refundCount}</h5>
       </div>
 
       <div className="mb-3">
@@ -206,7 +225,6 @@ export default function OrderListScreen() {
                   <th>Return Status</th>
                   <th>Refund</th>
                   <th>Change Return Status</th>
-                  <th>View</th>
                   <th>Delete</th>
                 </tr>
               </thead>
@@ -223,7 +241,7 @@ export default function OrderListScreen() {
                     </td>
                     <td>
                       {order.isCancelled ? (
-                        <span></span>
+                        ''
                       ) : order.isPaid ? (
                         <span style={{ color: 'green', fontWeight: 'bold' }}>
                           Paid
@@ -335,7 +353,6 @@ export default function OrderListScreen() {
                     )}
 
                     <td>{order.returnStatus || 'N/A'}</td>
-
                     <td
                       style={{
                         fontWeight: 'bold',
@@ -344,7 +361,6 @@ export default function OrderListScreen() {
                     >
                       {order.returnedAt ? 'Yes' : 'No'}
                     </td>
-
                     <td>
                       <select
                         className="form-select form-select-sm"
@@ -363,16 +379,6 @@ export default function OrderListScreen() {
                         size="sm"
                         variant="outline-dark"
                         className="rounded-pill px-3"
-                        onClick={() => navigate(`/order/${order._id}`)}
-                      >
-                        🔍 View
-                      </Button>
-                    </td>
-                    <td>
-                      <Button
-                        size="sm"
-                        variant="outline-dark"
-                        className="rounded-pill px-3"
                         onClick={() => deleteHandler(order)}
                       >
                         🗑️ Delete
@@ -380,6 +386,26 @@ export default function OrderListScreen() {
                     </td>
                   </tr>
                 ))}
+
+                {/* Delete All Button Row */}
+                {orders.length > 0 && (
+                  <tr>
+                    <td colSpan="15" className="text-end py-2">
+                      <div className="d-flex justify-content-end align-items-center">
+                        <h5 className="text-success me-3 mb-0">
+                          Total Refunds: {refundCount}
+                        </h5>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={deleteAllHandler}
+                        >
+                          🗑️ Delete All
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
