@@ -221,14 +221,6 @@ function Header() {
                           📦 My Products
                         </button>
                       </li>
-                      <li>
-                        <button
-                          className="dropdown-item"
-                          onClick={() => navigate('/seller/orders')}
-                        >
-                          📜 My Orders
-                        </button>
-                      </li>
                     </>
                   ) : (
                     <>

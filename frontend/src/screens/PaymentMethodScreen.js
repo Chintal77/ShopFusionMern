@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import Axios from 'axios';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
+import Modal from 'react-bootstrap/Modal';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../payment.css';
@@ -24,7 +25,7 @@ const reducer = (state, action) => {
 
 export default function PaymentMethodScreen() {
   const navigate = useNavigate();
-  const [, dispatch] = useReducer(reducer, { loading: false });
+  const [{ loading }, dispatch] = useReducer(reducer, { loading: false });
 
   const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
   const latestOrder = JSON.parse(
@@ -50,6 +51,11 @@ export default function PaymentMethodScreen() {
     cvv: '',
   });
 
+  // 🟢 SBI Modal States
+  const [showModal, setShowModal] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState('');
+  const [payDisabled, setPayDisabled] = useState(true);
+
   useEffect(() => {
     if (!userInfo || !userInfo.token) {
       toast.error('⚠️ Please login to access payment');
@@ -59,11 +65,18 @@ export default function PaymentMethodScreen() {
     }
   }, [userInfo, shippingAddress, navigate]);
 
+  // 🟢 Main Place Order Handler
   const placeOrderHandler = async () => {
     if (!paymentMethodName)
       return toast.error('❌ Please select a payment method');
 
-    // ✅ Validate Card Details if Card Selected
+    // If payment method is NOT PayPal → open modal first
+    if (paymentMethodName !== 'PayPal' && !showModal) {
+      setShowModal(true);
+      return;
+    }
+
+    // ✅ Validate Card Details
     if (paymentMethodName === 'Card') {
       const { number, expiry, cvv } = cardDetails;
       if (!number || !expiry || !cvv) {
@@ -72,7 +85,7 @@ export default function PaymentMethodScreen() {
       }
     }
 
-    // ✅ Paytm Payment Flow
+    // ✅ For Paytm Payment Flow
     if (paymentMethodName === 'Paytm') {
       try {
         const { data } = await Axios.post(
@@ -137,7 +150,6 @@ export default function PaymentMethodScreen() {
     try {
       dispatch({ type: 'CREATE_REQUEST' });
 
-      // Step 1: Create order
       const { data } = await Axios.post(
         '/api/orders',
         {
@@ -154,7 +166,7 @@ export default function PaymentMethodScreen() {
 
       const createdOrder = data.order;
 
-      // Step 2: If payment method is NOT PayPal → Update isPaid in DB
+      // ✅ Mark as paid if not PayPal
       if (paymentMethodName !== 'PayPal') {
         await Axios.put(
           `/api/orders/${createdOrder._id}/pay`,
@@ -177,6 +189,7 @@ export default function PaymentMethodScreen() {
           : '✅ Order created successfully'
       );
 
+      setShowModal(false);
       navigate(`/order/${createdOrder._id}`);
     } catch (err) {
       dispatch({ type: 'CREATE_FAIL' });
@@ -343,6 +356,38 @@ export default function PaymentMethodScreen() {
           </div>
         </div>
       </div>
+
+      {/* 🟢 SBI Account Modal */}
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Select Your SBI Account</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Select
+            value={selectedAccount}
+            onChange={(e) => {
+              setSelectedAccount(e.target.value);
+              setPayDisabled(false);
+            }}
+          >
+            <option value="">-- Select Account --</option>
+            <option value="SBI-1234">SBI Savings - ****1234</option>
+            <option value="SBI-5678">SBI Current - ****5678</option>
+          </Form.Select>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={placeOrderHandler}
+            disabled={payDisabled || loading}
+          >
+            {loading ? 'Processing...' : 'Pay Now'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }
