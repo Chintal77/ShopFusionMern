@@ -13,6 +13,7 @@ import sellerRouter from './routes/sellerRoutes.js';
 import cron from 'node-cron';
 import Order from './models/orderModel.js';
 import cors from 'cors';
+import path from 'path';
 
 dotenv.config();
 mongoose
@@ -85,19 +86,10 @@ app.use((err, req, res, next) => {
 });
 
 const __dirname = path.resolve();
-
-// ✅ Serve React build in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../frontend/build')));
-
-  app.get('*', (req, res) =>
-    res.sendFile(path.resolve(__dirname, '../frontend/build', 'index.html'))
-  );
-} else {
-  app.get('/', (req, res) => {
-    res.send('API is running...');
-  });
-}
+app.use(express.static(path.join(__dirname, '../frontend/build')));
+app.get('*', (req, res) =>
+  res.sendFile(path.resolve(__dirname, '../frontend/build', 'index.html'))
+);
 
 const port = process.env.PORT || 5040;
 app.listen(port, () => {

@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "postinstall": "cd ../frontend && npm install && npm run build"
+    "postinstall": "cd ../frontend && npm install --legacy-peer-deps && npm run build"
   },
   "author": "",
   "license": "ISC",
