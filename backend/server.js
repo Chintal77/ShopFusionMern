@@ -7,7 +7,6 @@ import productRouter from './routes/productRoutes.js';
 import userRouter from './routes/userRoutes.js';
 import orderRouter from './routes/orderRoutes.js';
 import uploadRouter from './routes/uploadRoutes.js';
-import router from './routes/paytmRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 import sellerRouter from './routes/sellerRoutes.js';
 import cron from 'node-cron';
@@ -43,7 +42,6 @@ app.use('/api/products', productRouter);
 app.use('/api/users', userRouter);
 app.use('/api/orders', orderRouter);
 app.use('/api/upload', uploadRouter);
-app.use('/api/paytm', router);
 app.use('/api/ai', aiRoutes);
 app.use('/api/sellers', sellerRouter);
 
