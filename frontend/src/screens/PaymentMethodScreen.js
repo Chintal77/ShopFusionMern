@@ -373,6 +373,7 @@ export default function PaymentMethodScreen() {
             <option value="">-- Select Account --</option>
             <option value="SBI-1234">SBI Savings - ****1234</option>
             <option value="SBI-5678">SBI Current - ****5678</option>
+            <option value="SBI-5678">SBI Credit Card - *****678</option>
           </Form.Select>
         </Modal.Body>
         <Modal.Footer>

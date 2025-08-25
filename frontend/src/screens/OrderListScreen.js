@@ -53,6 +53,7 @@ export default function OrderListScreen() {
   const [searchTerm, setSearchTerm] = useState('');
   const [refundCount, setRefundCount] = useState(0);
 
+  // Fetch Orders
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -76,6 +77,7 @@ export default function OrderListScreen() {
     }
   }, [userInfo, successDelete]);
 
+  // Delete Single Order
   const deleteHandler = (order) => {
     confirmAlert({
       title: 'Confirm Delete',
@@ -102,6 +104,7 @@ export default function OrderListScreen() {
     });
   };
 
+  // Delete All Orders
   const deleteAllHandler = () => {
     confirmAlert({
       title: 'Confirm Delete All',
@@ -128,6 +131,7 @@ export default function OrderListScreen() {
     });
   };
 
+  // Update Status
   const updateStatus = async (orderId, field, value) => {
     try {
       await axios.put(
@@ -144,6 +148,7 @@ export default function OrderListScreen() {
     }
   };
 
+  // Update Return Status
   const retStatus = async (orderId, field, value) => {
     try {
       await axios.put(
@@ -160,6 +165,40 @@ export default function OrderListScreen() {
     }
   };
 
+  // Cancel Order Handler
+  const cancelOrderHandler = (order) => {
+    confirmAlert({
+      title: 'Confirm Cancel',
+      message: `Are you sure you want to cancel order ID: "${order._id}"?`,
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: async () => {
+            try {
+              await axios.put(
+                `/api/orders/${order._id}/cancel`,
+                { isCancelled: true },
+                { headers: { Authorization: `Bearer ${userInfo.token}` } }
+              );
+              toast.success('Order cancelled successfully');
+              const { data } = await axios.get('/api/orders', {
+                headers: { Authorization: `Bearer ${userInfo.token}` },
+              });
+              dispatch({ type: 'FETCH_SUCCESS', payload: data });
+            } catch (err) {
+              toast.error(getError(err));
+            }
+          },
+        },
+        {
+          label: 'No',
+          onClick: () => toast.info('Order cancellation cancelled'),
+        },
+      ],
+    });
+  };
+
+  // Pagination Setup
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
   const filteredOrders = orders.filter((order) =>
@@ -225,6 +264,7 @@ export default function OrderListScreen() {
                   <th>Return Status</th>
                   <th>Refund</th>
                   <th>Change Return Status</th>
+                  <th>Cancel</th>
                   <th>Delete</th>
                 </tr>
               </thead>
@@ -374,6 +414,21 @@ export default function OrderListScreen() {
                       </select>
                     </td>
 
+                    {/* Cancel Button */}
+                    <td>
+                      {order.isCancelled ? (
+                        <span className="badge bg-danger">Cancelled</span>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="warning"
+                          onClick={() => cancelOrderHandler(order)}
+                        >
+                          ❌ Cancel
+                        </Button>
+                      )}
+                    </td>
+
                     <td>
                       <Button
                         size="sm"
@@ -390,7 +445,7 @@ export default function OrderListScreen() {
                 {/* Delete All Button Row */}
                 {orders.length > 0 && (
                   <tr>
-                    <td colSpan="15" className="text-end py-2">
+                    <td colSpan="16" className="text-end py-2">
                       <div className="d-flex justify-content-end align-items-center">
                         <h5 className="text-success me-3 mb-0">
                           Total Refunds: {refundCount}

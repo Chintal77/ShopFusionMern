@@ -10,6 +10,8 @@ import uploadRouter from './routes/uploadRoutes.js';
 import router from './routes/paytmRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 import sellerRouter from './routes/sellerRoutes.js';
+import cron from 'node-cron';
+import Order from './models/orderModel.js';
 import cors from 'cors';
 
 dotenv.config();
@@ -43,6 +45,30 @@ app.use('/api/upload', uploadRouter);
 app.use('/api/paytm', router);
 app.use('/api/ai', aiRoutes);
 app.use('/api/sellers', sellerRouter);
+
+cron.schedule('* * * * *', async () => {
+  try {
+    const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000);
+
+    const unpaidOrders = await Order.find({
+      isPaid: false,
+      isCancelled: false,
+      createdAt: { $lt: threeMinutesAgo },
+    });
+
+    if (unpaidOrders.length > 0) {
+      for (const order of unpaidOrders) {
+        order.isCancelled = true;
+        order.cancelledBy = 'system';
+        order.cancelledAt = new Date();
+        await order.save();
+        console.log(`🛑 Auto-cancelled order: ${order._id}`);
+      }
+    }
+  } catch (err) {
+    console.error('❌ Auto-cancel job failed:', err.message);
+  }
+});
 
 // Route to get a single product by slug
 app.get('/api/products/:slug', (req, res) => {
