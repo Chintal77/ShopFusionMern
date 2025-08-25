@@ -585,7 +585,7 @@ export default function OrderScreen() {
                                 <>
                                   <button
                                     className="btn btn-sm btn-outline-danger mb-1"
-                                    onClick={handleReturn}
+                                    onClick={() => handleReturn(item)}
                                   >
                                     Return Item
                                   </button>
@@ -599,6 +599,63 @@ export default function OrderScreen() {
                                 </span>
                               )}
                             </>
+                          )}
+
+                          {/* ✅ New Cancel Order Button for Delivered Orders */}
+                          {order.isDelivered && !order.isCancelled && (
+                            <Button
+                              variant="danger"
+                              size="sm"
+                              className="mt-2"
+                              onClick={async () => {
+                                if (
+                                  window.confirm(
+                                    'Are you sure you want to cancel this order?'
+                                  )
+                                ) {
+                                  try {
+                                    await axios.put(
+                                      `/api/orders/${orderId}/cancel`,
+                                      {},
+                                      {
+                                        headers: {
+                                          Authorization: `Bearer ${userInfo.token}`,
+                                        },
+                                      }
+                                    );
+                                    toast.success(
+                                      'Order cancelled successfully'
+                                    );
+
+                                    // ✅ Fetch updated order after cancel
+                                    const { data: updatedOrder } =
+                                      await axios.get(
+                                        `/api/orders/${orderId}`,
+                                        {
+                                          headers: {
+                                            Authorization: `Bearer ${userInfo.token}`,
+                                          },
+                                        }
+                                      );
+
+                                    dispatch({
+                                      type: 'FETCH_SUCCESS',
+                                      payload: updatedOrder,
+                                    });
+                                  } catch (err) {
+                                    toast.error(getError(err));
+                                  }
+                                }
+                              }}
+                            >
+                              Cancel Order
+                            </Button>
+                          )}
+
+                          {order.isCancelled && (
+                            <div className="text-danger fw-bold mt-2">
+                              Order Cancelled
+                            </div>
                           )}
 
                           {returnDays <= 0 && (

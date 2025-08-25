@@ -34,6 +34,8 @@ import ProtectedRoute from './components/ProtectedRoute'; // customer route
 import { ToastContainer } from 'react-toastify';
 import AuthenticatedRoute from './components/AuthenticatedRoute';
 import SellerProductListScreen from './screens/SellerProductListScreen';
+import ForgetPasswordScreen from './screens/ForgetPasswordScreen';
+import ResetPasswordScreen from './screens/ResetPasswordScreen';
 
 function App() {
   const { state } = useContext(Store);
@@ -212,6 +214,11 @@ function App() {
                   <SellerProductListScreen />
                 </SellerRoute>
               }
+            />
+            <Route path="/forget-password" element={<ForgetPasswordScreen />} />
+            <Route
+              path="/reset-password/:token"
+              element={<ResetPasswordScreen />}
             />
           </Routes>
 

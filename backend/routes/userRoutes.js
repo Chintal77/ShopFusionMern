@@ -1,9 +1,9 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import expressAsyncHandler from 'express-async-handler';
-
+import jwt from 'jsonwebtoken';
 import User from '../models/userModel.js';
-import { generateToken, isAdmin, isAuth } from '../utils.js';
+import { isAuth, isAdmin, generateToken, baseUrl, mailgun } from '../utils.js';
 
 const userRouter = express.Router();
 
@@ -177,6 +177,150 @@ userRouter.put(
     } else {
       res.status(404).send({ message: 'User not found' });
     }
+  })
+);
+
+userRouter.post(
+  '/forget-password',
+  expressAsyncHandler(async (req, res) => {
+    const user = await User.findOne({ email: req.body.email });
+
+    if (user) {
+      const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
+        expiresIn: '3h',
+      });
+      user.resetToken = token;
+      await user.save();
+
+      //reset link
+      console.log(`${baseUrl()}/reset-password/${token}`);
+
+      mailgun()
+        .messages()
+        .send(
+          {
+            from: 'ShopFusion <admin@shopfusion.com>',
+            to: `${user.name} <${user.email}>`,
+            subject: 'Reset Your Password - ShopFusion',
+            html: `
+      <div style="font-family: Arial, sans-serif; background-color: #f5f7fa; padding: 30px;">
+        <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+          <div style="background-color: #0f172a; padding: 20px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 26px;">ShopFusion</h1>
+          </div>
+          <div style="padding: 30px;">
+            <h2 style="color: #1e293b;">Hi ${user.name},</h2>
+            <p style="color: #475569; font-size: 15px; line-height: 1.6;">
+              We received a request to reset your password. If you made this request, please click the button below:
+            </p>
+            <div style="text-align: center; margin: 25px 0;">
+              <a href="${baseUrl()}/reset-password/${token}" 
+                 style="background-color: #2563eb; color: white; padding: 12px 25px; border-radius: 6px; font-size: 16px; text-decoration: none; display: inline-block;">
+                 Reset Password
+              </a>
+            </div>
+            <p style="color: #64748b; font-size: 14px; line-height: 1.5;">
+              If you didn’t request this, you can safely ignore this email.  
+              The link will expire in <strong>3 hours</strong>.
+            </p>
+            <p style="color: #94a3b8; font-size: 13px; margin-top: 20px;">
+              If the button doesn't work, copy and paste this URL into your browser:
+            </p>
+            <p style="color: #2563eb; font-size: 13px; word-break: break-all;">
+              ${baseUrl()}/reset-password/${token}
+            </p>
+            <hr style="margin: 25px 0; border: none; border-top: 1px solid #e2e8f0;">
+            <p style="font-size: 13px; color: #94a3b8; text-align: center;">
+              Need help? Contact us at 
+              <a href="mailto:support@shopfusion.com" style="color: #2563eb; text-decoration: none;">support@shopfusion.com</a>
+            </p>
+          </div>
+        </div>
+      </div>
+      `,
+          },
+          (error, body) => {
+            console.log(error || body);
+          }
+        );
+
+      res.send({ message: 'We sent reset password link to your email.' });
+    } else {
+      res.status(404).send({ message: 'User not found' });
+    }
+  })
+);
+
+userRouter.post(
+  '/reset-password',
+  expressAsyncHandler(async (req, res) => {
+    jwt.verify(req.body.token, process.env.JWT_SECRET, async (err, decode) => {
+      if (err) {
+        return res.status(401).send({ message: 'Invalid Token' });
+      } else {
+        const user = await User.findOne({ resetToken: req.body.token });
+        if (user) {
+          if (req.body.password) {
+            // Update password
+            user.password = bcrypt.hashSync(req.body.password, 8);
+
+            // Clear reset token after successful reset
+            user.resetToken = undefined;
+            await user.save();
+
+            // Send success email
+            mailgun()
+              .messages()
+              .send(
+                {
+                  from: 'ShopFusion <admin@shopfusion.com>',
+                  to: `${user.name} <${user.email}>`,
+                  subject: 'Password Reset Successful - ShopFusion',
+                  html: `
+      <div style="font-family: Arial, sans-serif; background-color: #f5f7fa; padding: 30px;">
+        <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+          <div style="background-color: #0f172a; padding: 20px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 26px;">ShopFusion</h1>
+          </div>
+          <div style="padding: 30px;">
+            <h2 style="color: #1e293b;">Hello ${user.name},</h2>
+            <p style="color: #475569; font-size: 15px; line-height: 1.6;">
+              Your password has been successfully reset. You can now log in to your account using your new password.
+            </p>
+            <div style="text-align: center; margin: 25px 0;">
+              <a href="${baseUrl()}/signin" 
+                 style="background-color: #16a34a; color: white; padding: 12px 25px; border-radius: 6px; font-size: 16px; text-decoration: none; display: inline-block;">
+                 Go to Login
+              </a>
+            </div>
+            <p style="color: #64748b; font-size: 14px; line-height: 1.5;">
+              If you did not make this change, please 
+              <a href="${baseUrl()}/forget-password" style="color: #ef4444; text-decoration: none;">reset your password</a> immediately.
+            </p>
+            <hr style="margin: 25px 0; border: none; border-top: 1px solid #e2e8f0;">
+            <p style="font-size: 13px; color: #94a3b8; text-align: center;">
+              Need help? Contact us at 
+              <a href="mailto:support@shopfusion.com" style="color: #2563eb; text-decoration: none;">support@shopfusion.com</a>
+            </p>
+          </div>
+        </div>
+      </div>
+      `,
+                },
+                (error, body) => {
+                  console.log(error || body);
+                }
+              );
+
+            return res.send({
+              message: 'Password reset successfully. Confirmation email sent.',
+            });
+          }
+        } else {
+          return res.status(404).send({ message: 'User not found' });
+        }
+      }
+    });
   })
 );
 
