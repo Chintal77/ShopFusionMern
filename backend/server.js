@@ -84,10 +84,12 @@ app.use((err, req, res, next) => {
 });
 
 const __dirname = path.resolve();
+
 app.use(express.static(path.join(__dirname, '../frontend/build')));
-app.get('*', (req, res) =>
-  res.sendFile(path.resolve(__dirname, '../frontend/build', 'index.html'))
-);
+
+app.get('/*', (req, res) => {
+  res.sendFile(path.resolve(__dirname, '../frontend/build', 'index.html'));
+});
 
 const port = process.env.PORT || 5040;
 app.listen(port, () => {
